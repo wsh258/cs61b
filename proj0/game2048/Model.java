@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author Sihao_Wong
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -109,13 +109,38 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-        board.setViewingPerspective(side);
+
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        for(int i =0;i< board.size();i++)
+        {
+            int k = board.size()-1;
+            for (int j = board.size() - 2; j >= 0; j--)
+            {
+                Tile t =board.tile(i,j);
+                if(t==null) continue;
+                while (board.tile(i,k)!=null&&(k>j)&&board.tile(i,k).value()!=t.value())
+                {
+                    k--;
+                }
+                if(k==j) continue;
 
-        
+                if(board.move(i,k,t)) {
+                    score += board.tile(i, k).value();
+                    k--;
+                }
+                    changed = true;
 
+//                if(t!=null)
+//                {
+//                    board.move(i,3,t);
+//                    changed = true;
+//                }
+
+            }
+        }
 
         board.setViewingPerspective(Side.NORTH);
         checkGameOver();
