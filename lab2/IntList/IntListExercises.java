@@ -25,7 +25,7 @@ public class IntListExercises {
      */
     public static void setToZeroIfMaxFEL(IntList L) {
         IntList p = L;
-        while (p.rest!= null) {
+        while (p!= null) {
             if (firstDigitEqualsLastDigit(max(p))) {
                 p.first = 0;
             }
