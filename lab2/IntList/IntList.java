@@ -17,6 +17,7 @@ public class IntList {
         return 1 + this.rest.size();
     }
 
+
     /** Return the size of the list using no recursion! */
     public int iterativeSize() {
         IntList p = this;
@@ -27,6 +28,10 @@ public class IntList {
         }
         return totalSize;
     }
+    public IntList addFirst (int x){
+        return  new IntList(x,this);
+    }
+
 
     /** Returns the ith item of this IntList. */
     public int get(int i) {
