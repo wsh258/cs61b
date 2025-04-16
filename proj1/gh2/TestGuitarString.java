@@ -1,7 +1,7 @@
 package gh2;
 
 /* Imports the required audio library from the
- * edu.princeton.cs.introcs package. */
+ * edu.princeton.cs.intros package. */
 import edu.princeton.cs.introcs.StdAudio;
 
 import org.junit.Test;
@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 /** Tests the GuitarString class.
  *  @author Josh Hug
  */
-public class TestGuitarString  {
+public class TestGuitarString {
 
     @Test
     public void testPluckTheAString() {
@@ -63,7 +63,7 @@ public class TestGuitarString  {
         double s1 = s.sample();
         s.tic();
         double s2 = s.sample();
-        s.tic(); 
+        s.tic();
         double s3 = s.sample();
         s.tic();
         double s4 = s.sample();
@@ -79,5 +79,6 @@ public class TestGuitarString  {
         // for assertEquals(double, double)
         assertEquals("Wrong tic value. Try running the testTic method.", expected, s5, 0.001);
     }
-}
 
+
+}
