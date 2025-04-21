@@ -41,7 +41,6 @@ public class Dog implements Serializable{
     public static Dog fromFile(String name) {
         File existDog = join(DOG_FOLDER, name);
         return readObject(existDog, Dog.class);
-
     }
 
     /**
