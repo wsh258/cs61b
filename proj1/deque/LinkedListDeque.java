@@ -100,7 +100,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     public T get(int index) {
-        Node CurrentNode = this.sentinel;
+        if(size() == 0) {
+            return null;
+        }
+        Node CurrentNode = this.sentinel.next;
         while (index != 0){
             index--;
             CurrentNode = CurrentNode.next;
@@ -120,7 +123,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return false;
         }
 
-        for (int i = 1; i < size(); i++) {
+        for (int i = 0; i < size(); i++) {
             Object thisItem = this.get(i);
             Object otherItem = other.get(i);
 
@@ -132,10 +135,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     public T getRecursive(int index) {
-        if (index <= 0 || index > size) {
+        if (index < 0 || index > size) {
             return null;
         }
-        return getRecursiveHelper(sentinel.next, index-1);
+        return getRecursiveHelper(sentinel.next, index);
     }
 
     private T getRecursiveHelper(Node node, int index) {
@@ -144,7 +147,5 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         }
         return getRecursiveHelper(node.next, index - 1);
     }
-
-
 
 }

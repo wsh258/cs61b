@@ -12,7 +12,6 @@ public class ArrayDequeTest {
 
     public void addIsEmptySizeTest() {
 
-        System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
 
         ArrayDeque<String> lld1 = new ArrayDeque<>();
 
@@ -39,7 +38,6 @@ public class ArrayDequeTest {
     /** Adds an item, then removes an item, and ensures that dll is empty afterwards. */
     public void addRemoveTest() {
 
-        System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
 
         ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
 		// should be empty
@@ -59,7 +57,6 @@ public class ArrayDequeTest {
     /* Tests removing from an empty deque */
     public void removeEmptyTest() {
 
-        System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
 
         ArrayDeque<Integer> lld1 = new ArrayDeque<>();
         lld1.addFirst(3);
@@ -98,15 +95,12 @@ public class ArrayDequeTest {
         assertEquals(3.14159,d,0.000001);
         assertTrue(b);
 
-
-
     }
 
     @Test
     /* check if null is return when removing from an empty ArrayDeque. */
     public void emptyNullReturnTest() {
 
-        System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
 
         ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
 
@@ -122,13 +116,10 @@ public class ArrayDequeTest {
     /* Add large number of elements to deque; check if order is correct. */
     public void bigLLDequeTest() {
 
-        System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
-
         ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
         for (int i = 0; i < 1000000; i++) {
             lld1.addLast(i);
         }
-
         for (double i = 0; i < 500000; i++) {
             assertEquals("Should have the same value", i, (double) lld1.removeFirst(), 0.0);
         }
@@ -136,29 +127,19 @@ public class ArrayDequeTest {
         for (double i = 999999; i > 500000; i--) {
             assertEquals("Should have the same value", i, (double) lld1.removeLast(), 0.0);
         }
-
-
     }
     @Test
     public void getTest() {
+        ArrayDeque<String> lld1 = new ArrayDeque<>();
+        lld1.addLast("first");
+        lld1.addLast("second");
+        lld1.addLast("third");
 
-
-        ArrayDeque<String> lld2 = new ArrayDeque<String>();
-
-        assertTrue("A newly initialized LLDeque should be empty", lld2.isEmpty());
-        lld2.addFirst("front");
-
-        assertEquals("front", lld2.get(1));
-
-        lld2.addLast("middle");
-        assertEquals("middle", lld2.get(2));
-
-        lld2.addLast("back");
-        assertEquals("back", lld2.get(3));
-
-        System.out.println("Printing out deque: ");
-        lld2.printDeque();
-
+        assertEquals("first", lld1.get(0));
+        assertEquals("second", lld1.get(1));
+        assertEquals("third", lld1.get(2));
+        assertNull("Should return null for out-of-bounds index", lld1.get(3));
+        assertNull("Should return null for negative index", lld1.get(-1));
     }
 
 }

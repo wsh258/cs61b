@@ -20,7 +20,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
     private void resize(int newCapacity) {
         T[] newItems = (T[]) new Object[newCapacity];
         for (int i = 0;i < size();i++){
-            newItems[i] = get(i+1);
+            newItems[i] = get(i);
         }
         front = newCapacity-1;
         back = size();
@@ -96,15 +96,16 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T get(int index) {
-        if(index>size||index<0)
+        if(index>=size||index<0) {
             return null;
-        return items[Math.floorMod(front+index,items.length)];
+        }
+        return items[Math.floorMod(front+index+1,items.length)];
     }
 
     @Override
     public Iterator<T> iterator() {
         return new Iterator<>(){
-            int pos=1;
+            int pos=0;
             @Override
             public boolean hasNext() {
                 return pos<size();
@@ -131,7 +132,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
             return false;
         }
 
-        for (int i = 1; i < size(); i++) {
+        for (int i = 0; i < size(); i++) {
             Object thisItem = this.get(i);
             Object otherItem = other.get(i);
 

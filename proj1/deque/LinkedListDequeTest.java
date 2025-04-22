@@ -125,23 +125,18 @@ public class LinkedListDequeTest {
     }
 
     @Test
+    /* Tests the get method of LinkedListDeque */
     public void getTest() {
+        LinkedListDeque<String> lld1 = new LinkedListDeque<>();
+        lld1.addLast("first");
+        lld1.addLast("second");
+        lld1.addLast("third");
 
-
-        LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
-
-        assertTrue("A newly initialized LLDeque should be empty", lld1.isEmpty());
-        lld1.addFirst("front");
-
-        assertEquals("front", lld1.get(1));
-
-        lld1.addLast("middle");
-        assertEquals("middle", lld1.get(2));
-
-        lld1.addLast("back");
-        assertEquals("back", lld1.getRecursive(3));
-
-        System.out.println("Printing out deque: ");
-        lld1.printDeque();
+        assertEquals("first", lld1.get(0));
+        assertEquals("second", lld1.get(1));
+        assertEquals("third", lld1.get(2));
+        assertNull("Should return null for out-of-bounds index", lld1.get(3));
+        assertNull("Should return null for negative index", lld1.get(-1));
     }
+
 }
