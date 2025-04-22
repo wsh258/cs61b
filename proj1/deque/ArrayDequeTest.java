@@ -92,9 +92,11 @@ public class ArrayDequeTest {
         lld3.addFirst(true);
 
         String s = lld1.removeFirst();
-
+        Double d = lld2.removeLast();
+        boolean b = lld3.removeLast();
         assertEquals("string",s);
-
+        assertEquals(3.14159,d,0.000001);
+        assertTrue(b);
 
 
 
