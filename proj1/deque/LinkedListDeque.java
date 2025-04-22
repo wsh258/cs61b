@@ -94,7 +94,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
         Node currentNode = this.sentinel.next;
-        while (index != 0){
+        while (index != 0) {
             index--;
             currentNode = currentNode.next;
         }

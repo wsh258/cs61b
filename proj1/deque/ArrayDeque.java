@@ -18,7 +18,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     }
     private void resize(int newCapacity) {
         T[] newItems = (T[]) new Object[newCapacity];
-        for (int i = 0; i < size(); i++){
+        for (int i = 0; i < size(); i++) {
             newItems[i] = get(i);
         }
         front = newCapacity - 1;
@@ -54,11 +54,11 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void printDeque() {
-            StringBuilder stringBuilder = new StringBuilder(10);
-            for (T x : this) {
-                stringBuilder.append(x);
-                stringBuilder.append(" ");
-            }
+        StringBuilder stringBuilder = new StringBuilder(10);
+        for (T x : this) {
+            stringBuilder.append(x);
+            stringBuilder.append(" ");
+        }
         System.out.printf("%s", stringBuilder);
         System.out.println();
     }
@@ -80,7 +80,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T removeLast() {
-        if(isEmpty()) {
+        if (isEmpty()) {
             return null;
         }
         if (size() <= items.length / 4 && items.length >= INIT_CAPACITY) {
@@ -96,7 +96,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T get(int index) {
-        if(index >= size || index < 0) {
+        if (index >= size || index < 0) {
             return null;
         }
         return items[Math.floorMod(front + index + 1, items.length)];
