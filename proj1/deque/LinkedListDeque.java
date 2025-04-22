@@ -30,7 +30,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         T item;
         Node prev;
         Node next;
-        Node(T i,Node p,Node n) {
+        Node(T i, Node p, Node n) {
             item = i;
             prev = p;
             next = n;
@@ -137,5 +137,4 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         }
         return getRecursiveHelper(node.next, index - 1);
     }
-
 }

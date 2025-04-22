@@ -17,7 +17,7 @@ public class GuitarString {
     public GuitarString(double frequency) {
         int capacity = (int) Math.round(SR / frequency);
         buffer = new LinkedListDeque<>();
-        for (int i = 0 ; i<capacity ; i++){
+        for (int i = 0 ; i < capacity ; i++){
             buffer.addFirst(0.0);
         }
     }
