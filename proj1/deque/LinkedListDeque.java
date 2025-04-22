@@ -57,25 +57,15 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     public int size() {
         return size;
     }
-    public boolean isEmpty() {
-        return size==0;
-    }
 
     @Override
-    public String toString(){
+    public void printDeque() {
         StringBuilder stringBuilder = new StringBuilder(10);
         for (T x : this) {
             stringBuilder.append(x);
             stringBuilder.append(" ");
         }
-        return stringBuilder.toString();
-    }
-    @Override
-    public void printDeque() {
-
-
-        System.out.printf("%s",this);
-
+        System.out.printf("%s",stringBuilder);
         System.out.println();
     }
     public T removeFirst() {
