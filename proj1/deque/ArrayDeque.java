@@ -120,6 +120,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         };
     }
 
+
     public boolean equals(Object o) {
         if (this == o) {
             return true;

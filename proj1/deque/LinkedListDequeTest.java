@@ -139,7 +139,7 @@ public class LinkedListDequeTest {
         assertEquals("middle", lld1.get(2));
 
         lld1.addLast("back");
-        assertEquals("back", lld1.get(3));
+        assertEquals("back", lld1.getRecursive(3));
 
         System.out.println("Printing out deque: ");
         lld1.printDeque();
