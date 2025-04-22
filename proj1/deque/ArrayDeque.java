@@ -3,13 +3,9 @@ package deque;
 import java.util.Iterator;
 import java.util.Objects;
 
-public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
-    private T[] items;
-    private int front;
-    private int back;
-    private int size;
-    private static int INIT_CAPACITY = 8;
-
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
+    private T[] items; int front; int back; int size;
+    private static final int INIT_CAPACITY = 8;
 
     public ArrayDeque() {
         items = (T[]) new Object[INIT_CAPACITY];
@@ -17,7 +13,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         back = 1;
         size = 0;
     }
-    private void resize(int newCapacity) {
+    private void resize (int newCapacity) {
         T[] newItems = (T[]) new Object[newCapacity];
         for (int i = 0;i < size();i++){
             newItems[i] = get(i);
@@ -33,17 +29,17 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
             resize(size()*2);
         }
         items[front] = item;
-        front =  Math.floorMod(front-1,items.length);
+        front = Math.floorMod(front-1,items.length);
         size++;
     }
 
     @Override
     public void addLast(T item) {
-        if (size()== items.length ){
+        if (size() == items.length ){
             resize(size()*2);
         }
         items[back] = item;
-        back =  Math.floorMod(back+1,items.length);
+        back = Math.floorMod(back+1,items.length);
         size++;
     }
 
@@ -76,7 +72,6 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         items[front] = null;
         size--;
         return temp;
-
     }
 
     @Override
@@ -102,22 +97,24 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         return items[Math.floorMod(front+index+1,items.length)];
     }
 
-    @Override
     public Iterator<T> iterator() {
-        return new Iterator<>(){
-            int pos=0;
+        return new Iterator<>() {
+            private int count = 0;
             @Override
             public boolean hasNext() {
-                return pos<size();
+                return count < size;
             }
+
             @Override
             public T next() {
-                pos++;
-                return get(pos);
+                if (!hasNext()) {
+                    return null;}
+                T item = get(count);
+                count++;
+                return item;
             }
         };
     }
-
 
     public boolean equals(Object o) {
         if (this == o) {
@@ -142,5 +139,4 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         }
         return true;
     }
-
 }

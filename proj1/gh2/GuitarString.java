@@ -42,14 +42,12 @@ public class GuitarString {
      * the Karplus-Strong algorithm.
      */
     public void tic() {
-
         double temp1 =buffer.removeFirst();
-        buffer.addLast((buffer.get(1)+temp1)*DECAY*0.5);
+        buffer.addLast((buffer.get(0)+temp1)*DECAY*0.5);
     }
 
     /* Return the double at the front of the buffer. */
     public double sample() {
-
-        return buffer.get(1);
+        return buffer.get(0);
     }
 }
