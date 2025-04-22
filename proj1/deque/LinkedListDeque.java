@@ -10,7 +10,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
      */
     @Override
     public Iterator<T> iterator() {
-        return new Iterator<T>() {
+        return new Iterator<>() {
             private Node currentNode = sentinel;
 
             @Override
@@ -122,7 +122,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return false;
         }
 
-        for (int i = 0; i < size(); i++) {
+        for (int i = 1; i < size(); i++) {
             Object thisItem = this.get(i);
             Object otherItem = other.get(i);
 
