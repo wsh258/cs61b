@@ -52,20 +52,17 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         return size;
     }
 
+
     @Override
-    public String toString(){
-        StringBuilder stringBuilder = new StringBuilder(10);
-        for (T x : this) {
-            stringBuilder.append(x);
-            stringBuilder.append(" ");
-        }
-        return stringBuilder.toString();
-    }
-    @Override
-    public void printDeque(){
-        System.out.printf("%s",this);
+    public void printDeque() {
+            StringBuilder stringBuilder = new StringBuilder(10);
+            for (T x : this) {
+                stringBuilder.append(x);
+                stringBuilder.append(" ");
+            }
+        System.out.printf("%s",stringBuilder);
         System.out.println();
-    }
+        }
 
     @Override
     public T removeFirst() {
@@ -125,9 +122,10 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Deque<?> other)) {
+        if (!(o instanceof Deque<?>)) {
             return false;
         }
+        Deque<?> other = (Deque<?>) o;
 
         if (other.size() != this.size()) {
             return false;

@@ -26,11 +26,11 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         };
     }
 
-    private class Node{
+    private class Node {
         T item;
         Node prev;
         Node next;
-        Node(T i,Node p,Node n){
+        Node(T i,Node p,Node n) {
             item = i;
             prev = p;
             next = n;
@@ -54,10 +54,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         sentinel.prev.prev.next = sentinel.prev;
         size++;
     }
-    public int size(){
+    public int size() {
         return size;
     }
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         return size==0;
     }
 
@@ -71,14 +71,14 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         return stringBuilder.toString();
     }
     @Override
-    public void printDeque(){
+    public void printDeque() {
 
 
         System.out.printf("%s",this);
 
         System.out.println();
     }
-    public T removeFirst(){
+    public T removeFirst() {
         if(sentinel.next==sentinel){
             return null;
         }
@@ -88,7 +88,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         size--;
         return temp;
     }
-    public T removeLast(){
+    public T removeLast() {
         if(sentinel.prev==sentinel){
             return null;
         }
@@ -99,9 +99,9 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         return temp;
     }
 
-    public T get(int index){
+    public T get(int index) {
         Node CurrentNode = this.sentinel;
-        while (index !=0){
+        while (index != 0){
             index--;
             CurrentNode = CurrentNode.next;
         }
@@ -112,10 +112,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Deque<?> other)) {
+        if (!(o instanceof Deque<?>)) {
             return false;
         }
-
+        Deque<?> other = (Deque<?>) o;
         if (other.size() != this.size()) {
             return false;
         }
