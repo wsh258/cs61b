@@ -134,7 +134,7 @@ public class LinkedListDequeTest {
 
         assertEquals("first", lld1.get(0));
         assertEquals("second", lld1.get(1));
-        assertEquals("third", lld1.get(2));
+        assertEquals("third", lld1.getRecursive(2));
         assertNull("Should return null for out-of-bounds index", lld1.get(3));
         assertNull("Should return null for negative index", lld1.get(-1));
     }

@@ -23,7 +23,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         front = newCapacity - 1;
         back = size();
-        items  = newItems;
+        items = newItems;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void addLast(T item) {
-        if (size() == items.length ){
+        if (size() == items.length) {
             resize(size() * 2);
         }
         items[back] = item;
@@ -65,9 +65,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T removeFirst() {
-        if (isEmpty())
+        if (isEmpty()) {
             return null;
-        if (size()<= items.length/4 && items.length >= INIT_CAPACITY){
+        }
+        if (size() <= items.length / 4 && items.length >= INIT_CAPACITY) {
             resize(size() * 2);
         }
         front =  Math.floorMod(front + 1, items.length);
@@ -79,9 +80,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T removeLast() {
-        if(isEmpty())
+        if(isEmpty()) {
             return null;
-        if (size()<= items.length / 4 && items.length >= INIT_CAPACITY) {
+        }
+        if (size() <= items.length / 4 && items.length >= INIT_CAPACITY) {
             resize(size() * 2);
         }
         back = Math.floorMod(back - 1, items.length);
@@ -94,7 +96,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T get(int index) {
-        if(index>=size||index<0) {
+        if(index >= size || index < 0) {
             return null;
         }
         return items[Math.floorMod(front + index + 1, items.length)];
@@ -111,7 +113,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             @Override
             public T next() {
                 if (!hasNext()) {
-                    return null;}
+                    return null;
+                }
                 T item = get(count);
                 count++;
                 return item;

@@ -36,7 +36,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             next = n;
         }
     }
-    private int size ;
+    private int size;
     private final Node sentinel;
     public LinkedListDeque() {
         sentinel = new Node(null, null, null);
@@ -44,12 +44,12 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         sentinel.prev = sentinel;
 
     }
-    public void addFirst(T item){
+    public void addFirst(T item) {
         sentinel.next = new Node(item, sentinel, sentinel.next);
         sentinel.next.next.prev = sentinel.next;
         size++;
     }
-    public void addLast(T item){
+    public void addLast(T item) {
         sentinel.prev = new Node(item, sentinel.prev, sentinel);
         sentinel.prev.prev.next = sentinel.prev;
         size++;
@@ -65,7 +65,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             stringBuilder.append(x);
             stringBuilder.append(" ");
         }
-        System.out.printf("%s",stringBuilder);
+        System.out.printf("%s", stringBuilder);
         System.out.println();
     }
     public T removeFirst() {
@@ -73,8 +73,8 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
         T temp = sentinel.next.item;
-        sentinel.next.next.prev=sentinel;
-        sentinel.next=sentinel.next.next;
+        sentinel.next.next.prev = sentinel;
+        sentinel.next = sentinel.next.next;
         size--;
         return temp;
     }
@@ -93,12 +93,12 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         if (size() == 0) {
             return null;
         }
-        Node CurrentNode = this.sentinel.next;
+        Node currentNode = this.sentinel.next;
         while (index != 0){
             index--;
-            CurrentNode = CurrentNode.next;
+            currentNode = currentNode.next;
         }
-        return CurrentNode.item;
+        return currentNode.item;
     }
 
     public boolean equals(Object o) {
