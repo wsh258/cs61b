@@ -18,8 +18,8 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
     }
     private void resize(int newCapacity) {
         T[] newItems = (T[]) new Object[newCapacity];
-        for(int i = 0;i<size();i++){
-            newItems[i]  = get(i+1);
+        for (int i = 0;i < size();i++){
+            newItems[i] = get(i+1);
         }
         front = newCapacity-1;
         back = size();
@@ -28,7 +28,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void addFirst(T item) {
-        if (size()== items.length && items.length > INIT_CAPACITY){
+        if (size() == items.length){
             resize(size()*2);
         }
         items[front] = item;
@@ -38,7 +38,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void addLast(T item) {
-        if (size()== items.length && items.length > INIT_CAPACITY){
+        if (size()== items.length ){
             resize(size()*2);
         }
         items[back] = item;
@@ -70,7 +70,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
     public T removeFirst() {
         if(isEmpty())
             return null;
-        if (size()<= items.length/4 && items.length > INIT_CAPACITY){
+        if (size()<= items.length/4 && items.length >= INIT_CAPACITY){
             resize(size()*2);
         }
         front =  Math.floorMod(front+1,items.length);
@@ -85,7 +85,7 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
     public T removeLast() {
         if(isEmpty())
             return null;
-        if (size()<= items.length/4 && items.length > INIT_CAPACITY){
+        if (size()<= items.length/4 && items.length >= INIT_CAPACITY){
             resize(size()*2);
         }
         back =  Math.floorMod(back-1,items.length);
