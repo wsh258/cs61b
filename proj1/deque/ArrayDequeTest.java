@@ -124,9 +124,6 @@ public class ArrayDequeTest {
 
         ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
         for (int i = 0; i < 1000000; i++) {
-            if(lld1.size()==8){
-                System.out.print("duan");
-            }
             lld1.addLast(i);
         }
 
