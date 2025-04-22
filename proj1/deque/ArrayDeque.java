@@ -1,7 +1,6 @@
 package deque;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
     private T[] items;
@@ -19,7 +18,9 @@ public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
     }
     private void resize(int newCapacity) {
         T[] newItems = (T[]) new Object[newCapacity];
-        System.arraycopy(items, 0, newItems, 0, size);
+        for(int i = 0;i<size();i++){
+            newItems[i]  = get(i+1);
+        }
         front = newCapacity-1;
         back = size();
         items  = newItems;
