@@ -4,7 +4,10 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
-    private T[] items; int front; int back; int size;
+    private T[] items;
+    private int front;
+    private int back;
+    private int size;
     private static final int INIT_CAPACITY = 8;
 
     public ArrayDeque() {
@@ -13,33 +16,33 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         back = 1;
         size = 0;
     }
-    private void resize (int newCapacity) {
+    private void resize(int newCapacity) {
         T[] newItems = (T[]) new Object[newCapacity];
-        for (int i = 0;i < size();i++){
+        for (int i = 0; i < size(); i++){
             newItems[i] = get(i);
         }
-        front = newCapacity-1;
+        front = newCapacity - 1;
         back = size();
         items  = newItems;
     }
 
     @Override
     public void addFirst(T item) {
-        if (size() == items.length){
-            resize(size()*2);
+        if (size() == items.length) {
+            resize(size() * 2);
         }
         items[front] = item;
-        front = Math.floorMod(front-1,items.length);
+        front = Math.floorMod(front - 1, items.length);
         size++;
     }
 
     @Override
     public void addLast(T item) {
         if (size() == items.length ){
-            resize(size()*2);
+            resize(size() * 2);
         }
         items[back] = item;
-        back = Math.floorMod(back+1,items.length);
+        back = Math.floorMod(back + 1, items.length);
         size++;
     }
 
@@ -56,18 +59,18 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 stringBuilder.append(x);
                 stringBuilder.append(" ");
             }
-        System.out.printf("%s",stringBuilder);
+        System.out.printf("%s", stringBuilder);
         System.out.println();
-        }
+    }
 
     @Override
     public T removeFirst() {
-        if(isEmpty())
+        if (isEmpty())
             return null;
         if (size()<= items.length/4 && items.length >= INIT_CAPACITY){
-            resize(size()*2);
+            resize(size() * 2);
         }
-        front =  Math.floorMod(front+1,items.length);
+        front =  Math.floorMod(front + 1, items.length);
         T temp = items[front];
         items[front] = null;
         size--;
@@ -78,10 +81,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     public T removeLast() {
         if(isEmpty())
             return null;
-        if (size()<= items.length/4 && items.length >= INIT_CAPACITY){
-            resize(size()*2);
+        if (size()<= items.length / 4 && items.length >= INIT_CAPACITY) {
+            resize(size() * 2);
         }
-        back =  Math.floorMod(back-1,items.length);
+        back = Math.floorMod(back - 1, items.length);
         T temp = items[back];
         items[back] = null;
         size--;
@@ -94,7 +97,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if(index>=size||index<0) {
             return null;
         }
-        return items[Math.floorMod(front+index+1,items.length)];
+        return items[Math.floorMod(front + index + 1, items.length)];
     }
 
     public Iterator<T> iterator() {
