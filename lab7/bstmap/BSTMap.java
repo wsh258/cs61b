@@ -1,7 +1,9 @@
 package bstmap;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
@@ -99,8 +101,9 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
             return  size;
         }
     }
-    BST<K, V> bst;
-    BSTMap() {
+    private BST<K, V> bst;
+
+    public BSTMap() {
         bst = new BST<>();
     }
 
@@ -140,9 +143,13 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public Set<K> keySet() {
-        return Set.of();
+        if (bst.root == null) {
+            return null;
+        }
+        TreeSet<K> ks = new TreeSet<>();
+        addKey(bst.root, ks);
+        return ks;
     }
-
 
     @Override
     public V remove(K key) {
@@ -167,5 +174,38 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     @Override
     public Iterator<K> iterator() {
         return null;
+    }
+
+    private class BSTMapIter implements Iterator<K> {
+
+
+        public BSTMapIter() {
+            cur = list;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return cur != null;
+        }
+
+        @Override
+        public K next() {
+            K ret = cur.key;
+            cur = cur.next;
+            return ret;
+        }
+
+        /** Stores the current key-value pair. */
+        private ULLMap.Entry cur;
+
+    }
+
+    private void addKey(BST<K, V>.Node root, Set<K> ks) {
+        if (root == null) {
+            return;
+        }
+        ks.add(root.key);
+        addKey(root.left, ks);
+        addKey(root.right, ks);
     }
 }
