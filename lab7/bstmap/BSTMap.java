@@ -7,7 +7,7 @@ import java.util.TreeSet;
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
 
-    public class BST {
+    private class BST {
         private Node root;             // root of BST
         private int size = 0;
 
@@ -192,5 +192,11 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     public Iterator<K> iterator() {
         return keySet().iterator();
     }
+    public void printInOrder() {
+        for (K k : this){
+            System.out.print(k + " ");
+        }
+    }
+
 }
 
