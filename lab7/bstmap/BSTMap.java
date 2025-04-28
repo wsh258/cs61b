@@ -176,29 +176,26 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         return null;
     }
 
-    private class BSTMapIter implements Iterator<K> {
-
-
-        public BSTMapIter() {
-            cur = list;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return cur != null;
-        }
-
-        @Override
-        public K next() {
-            K ret = cur.key;
-            cur = cur.next;
-            return ret;
-        }
-
-        /** Stores the current key-value pair. */
-        private ULLMap.Entry cur;
-
-    }
+//    private class BSTMapIter implements Iterator<K> {
+//
+//
+//        public BSTMapIter() {
+//
+//        }
+//
+//        @Override
+//        public boolean hasNext() {
+//
+//        }
+//
+//        @Override
+//        public K next() {
+//
+//        }
+//
+//        /** Stores the current key-value pair. */
+//
+//    }
 
     private void addKey(BST<K, V>.Node root, Set<K> ks) {
         if (root == null) {
