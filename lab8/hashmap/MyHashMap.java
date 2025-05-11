@@ -9,7 +9,7 @@ import java.util.*;
  *  Assumes null keys will never be inserted, and does not resize down upon remove().
  *  @author Sihao Wong
  */
-public class MyHashMap<K, V> implements Map61B<K, V>{
+public class MyHashMap<K, V> implements Map61B<K, V> {
 
     /**
      * Protected helper class to store key/value pairs
@@ -28,7 +28,8 @@ public class MyHashMap<K, V> implements Map61B<K, V>{
     /* Instance Variables */
     private Collection<Node>[] buckets;
     // You should probably define some more!
-    private int bucketSize = 16; private double loadFactor = 0.75;
+    private int bucketSize = 16;
+    private double loadFactor = 0.75;
     private int size = 0;
     /** Constructors */
     public MyHashMap() {
@@ -57,7 +58,7 @@ public class MyHashMap<K, V> implements Map61B<K, V>{
      * Returns a new node to be placed in a hash table bucket
      */
     private Node createNode(K key, V value) {
-        return new Node(key,value);
+        return new Node(key, value);
     }
 
     /**
@@ -189,7 +190,11 @@ public class MyHashMap<K, V> implements Map61B<K, V>{
      */
     @Override
     public Set<K> keySet() {
-        return Set.of();
+        HashSet<K> set = new HashSet<>();
+        for(K k :this){
+            set.add(k);
+        }
+        return set;
     }
 
     /**
@@ -225,18 +230,37 @@ public class MyHashMap<K, V> implements Map61B<K, V>{
     @Override
     public Iterator<K> iterator() {
         return new Iterator<K>() {
-            int i = 0;
+            int bucketIndex = 0;
+            Iterator<Node> bucketIterator = advanceToNextNonEmptyBucket();
+
+            // 前进到下一个非空 bucket，并返回其迭代器
+            private Iterator<Node> advanceToNextNonEmptyBucket() {
+                while (bucketIndex < buckets.length) {
+                    if (!buckets[bucketIndex].isEmpty()) {
+                        return buckets[bucketIndex].iterator();
+                    }
+                    bucketIndex++;
+                }
+                return null;
+            }
             @Override
             public boolean hasNext() {
-                if(i < bucketSize && buckets[i].iterator().hasNext()) {
+                if (bucketIterator == null) return false;
+                if (bucketIterator.hasNext()) {
                     return true;
+                } else {
+                    bucketIndex++;
+                    bucketIterator = advanceToNextNonEmptyBucket();
+                    return bucketIterator != null && bucketIterator.hasNext();
                 }
-
             }
 
             @Override
             public K next() {
-                return null;
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return bucketIterator.next().key;
             }
         };
     }
