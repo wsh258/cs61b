@@ -109,8 +109,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      */
     @Override
     public void clear() {
-        bucketSize = 16;
-        loadFactor = 0.75;
+        size = 0;
         buckets = createTable(bucketSize);
     }
 
@@ -164,17 +163,26 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      */
     @Override
     public void put(K key, V value) {
-        size++;
-
         int index = getIndex(key);
-        buckets[index].add(createNode(key, value));
-        if ((double) buckets[index].size() / bucketSize >= loadFactor) {
-            bucketSize *= 2;
-            resize(bucketSize);
 
+        if (containsKey(key)){
+            for (Node node : buckets[index]) {
+                if (node.key.equals(key)) {
+                    node.value = value;
+                }
+            }
+        }
+        else {
+            size++;
+            buckets[index].add(createNode(key, value));
+            if ((double) buckets[index].size() / bucketSize >= loadFactor) {
+                bucketSize *= 2;
+                resize(bucketSize);
+
+            }
         }
     }
-    void resize(int newSize) {
+    private void resize(int newSize) {
         Collection<Node>[] oldBuckets = buckets;
         buckets = createTable(newSize);
         size = 0; // 将 size 重置，在重新插入时递增
