@@ -214,8 +214,23 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      */
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException("");
+        int index = getIndex(key);
+        Node node;
+        if (containsKey(key)) {
+            Iterator<Node> it = buckets[index].iterator();
+            while (it.hasNext()) {
+                node = it.next();
+                if (node.key.equals(key)) {
+                    V temp = node.value;
+                    it.remove();
+                    size--;
+                    return temp;
+                }
+            }
+        }
+        return null;
     }
+
 
     /**
      * Removes the entry for the specified key only if it is currently mapped to
@@ -227,7 +242,23 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      */
     @Override
     public V remove(K key, V value) {
-        throw new UnsupportedOperationException("");
+        int index = getIndex(key);
+
+
+        for (Node node : buckets[index]) {
+            if (node.key.equals(key)&& node.value.equals(value)) {
+                Iterator<Node> it = buckets[index].iterator();
+                while (it.hasNext()) {
+                    node = it.next();
+                    if (node.key.equals(key)) {
+                        V temp = node.value;
+                        it.remove();
+                        size--;
+                        return temp;
+                    }
+                }
+            }
+        return null;
     }
 
     /**
