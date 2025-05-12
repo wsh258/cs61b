@@ -246,7 +246,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
 
         for (Node node : buckets[index]) {
-            if (node.key.equals(key)&& node.value.equals(value)) {
+            if (node.key.equals(key) && node.value.equals(value)) {
                 Iterator<Node> it = buckets[index].iterator();
                 while (it.hasNext()) {
                     node = it.next();
@@ -258,6 +258,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
                     }
                 }
             }
+        }
         return null;
     }
 
