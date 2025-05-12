@@ -102,7 +102,6 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     private int getIndex(K key) {
         return Math.floorMod(key.hashCode(), bucketSize);
     }
-    // TODO: Implement the methods of the Map61B Interface below
     // Your code won't compile until you do so!
     /**
      * Removes all of the mappings from this map.
