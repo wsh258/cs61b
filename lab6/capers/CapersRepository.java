@@ -32,7 +32,6 @@ public class CapersRepository {
     public static void setupPersistence() {
         CAPERS_FOLDER.mkdir();
         Dog.DOG_FOLDER.mkdir();
-
     }
 
     /**

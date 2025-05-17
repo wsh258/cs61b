@@ -41,7 +41,7 @@ public class Main {
         if (args.length == 0) {
             Utils.exitWithError("Must have at least one argument");
         }
-        System.out.println("args: " + Arrays.toString(args));
+        //System.out.println("args: " + Arrays.toString(args));
         CapersRepository.setupPersistence();
         String text;
         switch (args[0]) {
@@ -62,7 +62,6 @@ public class Main {
         default:
             exitWithError(String.format("Unknown command: %s", args[0]));
         }
-        return;
 
     }
 

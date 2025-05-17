@@ -11,8 +11,6 @@ public class Dog implements Serializable{
 
     /** Folder that dogs live in. */
     static final File DOG_FOLDER = join(CapersRepository.CAPERS_FOLDER,"dogs");
-
-
     /** Age of dog. */
     private int age;
     /** Breed of dog. */
@@ -56,7 +54,7 @@ public class Dog implements Serializable{
      * Saves a dog to a file for future use.
      */
     public void saveDog() {
-        File f = join(DOG_FOLDER,name);
+        File f = join(DOG_FOLDER, name);
         writeObject(f,this);
     }
 
