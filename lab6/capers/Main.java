@@ -63,6 +63,7 @@ public class Main {
             exitWithError(String.format("Unknown command: %s", args[0]));
         }
         return;
+
     }
 
     /**
