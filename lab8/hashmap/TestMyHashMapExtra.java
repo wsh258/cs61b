@@ -2,7 +2,6 @@ package hashmap;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
-
 /** Tests of optional parts of lab 8. */
 public class TestMyHashMapExtra {
 

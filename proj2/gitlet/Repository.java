@@ -25,5 +25,14 @@ public class Repository {
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
+    String HEAD = "mater";
+    public static void glInit() {
+        if(GITLET_DIR.mkdir()) {
+            Commit.commitFolder.mkdir();
+        } else {
+            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.exit(0);
+        }
+    }
     /* TODO: fill in the rest of this class. */
 }
