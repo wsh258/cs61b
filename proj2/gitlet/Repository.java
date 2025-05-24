@@ -19,7 +19,8 @@ public class Repository {
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
      */
-
+    static final File commitFolder = join(Repository.GITLET_DIR,"commits");
+    static final File blobsFolder = join(Repository.GITLET_DIR,"commits");
     /** The current working directory. */
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
@@ -27,12 +28,14 @@ public class Repository {
 
     String HEAD = "mater";
     public static void glInit() {
-        if(GITLET_DIR.mkdir()) {
-            Commit.commitFolder.mkdir();
+        if (GITLET_DIR.mkdir()) {
+            commitFolder.mkdir();
         } else {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
-            System.exit(0);
+            throw new GitletException("A Gitlet version-control system already exists in the current directory.");
         }
+        Commit initialCommit = new Commit("initial commit",null,null);
+        commitFolder.mkdir();
+        initialCommit.saveCommit();
     }
     /* TODO: fill in the rest of this class. */
 }

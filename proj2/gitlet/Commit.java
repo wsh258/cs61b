@@ -6,6 +6,7 @@ import static gitlet.Utils.*;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.HashMap;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -27,8 +28,10 @@ public class Commit implements Serializable {
     private String timestamp;
     /* TODO: fill in the rest of this class. */
     //标记该commit的保存对象的变量
+    HashMap <String,String> blobs = new HashMap<>();
     private String parent;
     static final File commitFolder = join(Repository.GITLET_DIR,"commits");
+    static final File blobsFolder = join(Repository.GITLET_DIR,"commits");
 
     public Commit(String message, String timestamp, String parent) {
         this.message = message;
@@ -43,6 +46,7 @@ public class Commit implements Serializable {
         File f = join(commitFolder, Utils.sha1(this));
         writeObject(f,this);
     }
+
     public static Commit fromFile(String SHA) {
         File existCommit = join(commitFolder, SHA);
         return readObject(existCommit, Commit.class);
