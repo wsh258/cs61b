@@ -12,7 +12,7 @@ import java.util.HashMap;
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author Sihao Wong
  */
 public class Commit implements Serializable {
     /**
@@ -31,7 +31,7 @@ public class Commit implements Serializable {
     HashMap <String,String> blobs = new HashMap<>();
     private String parent;
     static final File commitFolder = join(Repository.GITLET_DIR,"commits");
-    static final File blobsFolder = join(Repository.GITLET_DIR,"commits");
+    static final File blobsFolder = join(Repository.GITLET_DIR,"blobs");
 
     public Commit(String message, String timestamp, String parent) {
         this.message = message;
@@ -50,6 +50,12 @@ public class Commit implements Serializable {
     public static Commit fromFile(String SHA) {
         File existCommit = join(commitFolder, SHA);
         return readObject(existCommit, Commit.class);
+    }
+
+    public void addBlobs(String filename) {
+        String fileSHA = sha1(filename);
+        blobs.put(filename,fileSHA);
+
     }
 
 }

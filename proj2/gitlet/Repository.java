@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.File;
+import java.util.HashMap;
+
 import static gitlet.Utils.*;
 
 // TODO: any imports you need here
@@ -20,14 +22,16 @@ public class Repository {
      * variable is used. We've provided two examples for you.
      */
     static final File commitFolder = join(Repository.GITLET_DIR,"commits");
-    static final File blobsFolder = join(Repository.GITLET_DIR,"commits");
+    static final File blobsFolder = join(Repository.GITLET_DIR,"blobs");
     /** The current working directory. */
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    HashMap<String,String> commitSHA = new HashMap<>();
 
-    String HEAD = "mater";
-    public static void glInit() {
+    String initialHead = "mater";
+    Commit Head;
+    public void glInit() {
         if (GITLET_DIR.mkdir()) {
             commitFolder.mkdir();
         } else {
@@ -36,6 +40,12 @@ public class Repository {
         Commit initialCommit = new Commit("initial commit",null,null);
         commitFolder.mkdir();
         initialCommit.saveCommit();
+        Head = initialCommit;
+    }
+
+    public void commitAdd (String fileName){
+        File thisAddFile = join(CWD,fileName);
+
     }
     /* TODO: fill in the rest of this class. */
 }
