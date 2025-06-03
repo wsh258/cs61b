@@ -32,10 +32,11 @@ public class Repository {
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
     HashMap<String, String> commitSHA = new HashMap<>();
+    public static final File HeadFile = join(GITLET_DIR,"Head");
 
-    String initialHead = "mater";
+    String initialBranch = "Mater";
     Commit Head;
-
+    String currentCommit;
     public static Commit glInit() {
         if (GITLET_DIR.mkdir()) {
             commitFolder.mkdir();
@@ -43,17 +44,60 @@ public class Repository {
             throw new GitletException("A Gitlet version-control system already exists in the current directory.");
         }
         Commit initialCommit = new Commit("initial commit", null, null);
+        changeHead(initialCommit);
         commitFolder.mkdir();
         initialCommit.saveCommit();
         return initialCommit;
 
     }
+    public static Commit getHead() {
+        return Commit.fromFile(readContentsAsString(HeadFile));
+    }
 
-    public void addTempBlobs(String fileName) {
+    public static void changeHead(Commit cm) {
+        writeContents(HeadFile,sha1(cm));
+    }
+
+    public static String stagedForAddition(String fileName) {
         File thisAddFile = join(CWD, fileName);
-        String SHA1 = sha1(thisAddFile);
-        File newBlobs = join(blobsFolder, sha1(thisAddFile));
+        if(!thisAddFile.exists()) {
+            return null;
+        }
+        File StageFolder = join(GITLET_DIR, ".stage");
 
+        File addition = join(StageFolder, "addition", sha1(thisAddFile));
+        writeContents(addition,readContentsAsString(thisAddFile));
+        Stage sd =  Stage.fromFile();
+        Commit Head = getHead();
+        if (sd.addition.containsValue(sha1(thisAddFile)) || Head.blobs.containsValue(sha1(thisAddFile))) {
+            sd.addition.remove(fileName, sha1(thisAddFile));
+            return null;
+        }
+        sd.addition.put(fileName, sha1(thisAddFile));
+        sd.saveStage();
+        return sha1(thisAddFile);
         /* TODO: fill in the rest of this class. */
     }
+
+    public static String commitCommands(String fileName) {
+        File thisAddFile = join(CWD, fileName);
+        if(!thisAddFile.exists()) {
+            return null;
+        }
+        File StageFolder = join(GITLET_DIR, ".stage");
+
+        File addition = join(StageFolder, "addition", sha1(thisAddFile));
+        writeContents(addition,readContentsAsString(thisAddFile));
+        Stage sd =  Stage.fromFile();
+        Commit Head = getHead();
+        if (sd.addition.containsValue(sha1(thisAddFile)) || Head.blobs.containsValue(sha1(thisAddFile))) {
+            sd.addition.remove(fileName, sha1(thisAddFile));
+            return null;
+        }
+        sd.addition.put(fileName, sha1(thisAddFile));
+        sd.saveStage();
+        return sha1(thisAddFile);
+        /* TODO: fill in the rest of this class. */
+    }
+
 }
