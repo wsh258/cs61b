@@ -1,7 +1,12 @@
 package gitlet;
 
 import java.io.File;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 
 import static gitlet.Utils.*;
 
@@ -79,25 +84,23 @@ public class Repository {
         /* TODO: fill in the rest of this class. */
     }
 
-    public static String commitCommands(String fileName) {
-        File thisAddFile = join(CWD, fileName);
-        if(!thisAddFile.exists()) {
-            return null;
-        }
-        File StageFolder = join(GITLET_DIR, ".stage");
 
-        File addition = join(StageFolder, "addition", sha1(thisAddFile));
-        writeContents(addition,readContentsAsString(thisAddFile));
-        Stage sd =  Stage.fromFile();
-        Commit Head = getHead();
-        if (sd.addition.containsValue(sha1(thisAddFile)) || Head.blobs.containsValue(sha1(thisAddFile))) {
-            sd.addition.remove(fileName, sha1(thisAddFile));
-            return null;
-        }
-        sd.addition.put(fileName, sha1(thisAddFile));
-        sd.saveStage();
-        return sha1(thisAddFile);
-        /* TODO: fill in the rest of this class. */
+
+        /**
+         * 获取当前 UTC 时间的格式化字符串
+         * 格式为：HH:mm:ss UTC, EEEE, d MMMM yyyy
+         * 示例：15:42:18 UTC, Tuesday, 4 June 2025
+         */
+    public static String getFormattedUTCTimestamp() {
+        ZonedDateTime now = Instant.now().atZone(ZoneOffset.UTC);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                "HH:mm:ss 'UTC,' EEEE, d MMMM yyyy", Locale.ENGLISH);
+        return now.format(formatter);
+    }
+    public static String commitCommands(String message) {
+
+        Commit newCommit = new Commit(message,getFormattedUTCTimestamp(),sha1(getHead()));
+        return null;
     }
 
 }

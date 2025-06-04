@@ -42,9 +42,10 @@ public class Commit implements Serializable {
         }
     }
 
-    public void saveCommit() {
+    public String saveCommit() {
         File f = join(commitFolder, Utils.sha1(this));
         writeObject(f,this);
+        return Utils.sha1(this);
     }
 
     public static Commit fromFile(String SHA) {
