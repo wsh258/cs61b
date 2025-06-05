@@ -1,8 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -74,33 +72,80 @@ public class Repository {
         writeContents(addition,readContentsAsString(thisAddFile));
         Stage sd =  Stage.fromFile();
         Commit Head = getHead();
-        if (sd.addition.containsValue(sha1(thisAddFile)) || Head.blobs.containsValue(sha1(thisAddFile))) {
+        if (sd.addition.containsValue(sha1(thisAddFile)) || Head.getBlobs().containsValue(sha1(thisAddFile))) {
             sd.addition.remove(fileName, sha1(thisAddFile));
             return null;
         }
         sd.addition.put(fileName, sha1(thisAddFile));
         sd.saveStage();
         return sha1(thisAddFile);
-        /* TODO: fill in the rest of this class. */
     }
 
 
-
-        /**
-         * 获取当前 UTC 时间的格式化字符串
-         * 格式为：HH:mm:ss UTC, EEEE, d MMMM yyyy
-         * 示例：15:42:18 UTC, Tuesday, 4 June 2025
-         */
-    public static String getFormattedUTCTimestamp() {
-        ZonedDateTime now = Instant.now().atZone(ZoneOffset.UTC);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
-                "HH:mm:ss 'UTC,' EEEE, d MMMM yyyy", Locale.ENGLISH);
-        return now.format(formatter);
-    }
+        public static String getFormattedTimestamp() {
+            ZonedDateTime now = ZonedDateTime.now();  // 使用本地时区
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                    "E MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
+            return now.format(formatter);
+        }
     public static String commitCommands(String message) {
+        if (message.isEmpty()) {
+            message("Please enter a commit message.");
+            System.exit(0);
+        }
+        Commit Head = getHead();
+        Commit newCommit = new Commit(message,getFormattedTimestamp(),sha1(Head));
+        newCommit.addBlobs(Head.getBlobs(),null);
+        if (Stage.fromFile().addition.isEmpty() && Stage.fromFile().removal.isEmpty()) {
+            message("No changes added to the commit.");
+            System.exit(0);
+        }
+        newCommit.addBlobs(Stage.fromFile().addition,Stage.fromFile().removal);
+        changeHead(newCommit);
+        return newCommit.saveCommit();
+    }
 
-        Commit newCommit = new Commit(message,getFormattedUTCTimestamp(),sha1(getHead()));
-        return null;
+    public static String stagedForRemoval(String fileName) {
+        if (!getHead().getBlobs().containsKey(fileName) && !Stage.fromFile().removal.containsKey(fileName)) {
+            message("No reason to remove the file.");
+            System.exit(0);
+        }
+        File thisremoveFile = join(CWD, fileName);
+        String removeSHA = sha1(thisremoveFile);
+        //如果文件已被暂存添加（staged for addition） → 把它从暂存区移除。
+        Stage sd =  Stage.fromFile();
+        sd.removal.remove(fileName);
+        sd.saveStage();
+        //如果文件在当前提交中被跟踪（tracked）：
+        //把它标记为待删除（staged for removal）。
+        //如果用户尚未删除该文件（即工作目录中还存在该文件）：
+        //👉 从工作目录中将其物理删除（即 File.delete()）。
+        Commit Head = getHead();
+        if (Head.getBlobs().containsKey(fileName)) {
+            Stage sdd =  Stage.fromFile();
+            sdd.removal.put(fileName,sha1(thisremoveFile));
+            sdd.saveStage();
+            restrictedDelete(thisremoveFile);
+        }
+        return removeSHA;
+    }
+
+    public static void printLog() {
+        Commit currentCommit = getHead();
+        while (currentCommit != null){
+            String sb = "===\n" +
+                    "commit " + sha1(currentCommit) + "\n" +
+                    "Date: " + currentCommit.getTimestamp() + "\n" +
+                    currentCommit.getMessage();
+
+            message(sb);
+
+            String parentSha = currentCommit.getParent();
+            if (parentSha == null) {
+                break;
+            }
+            currentCommit = Commit.fromFile(parentSha);
+        }
     }
 
 }
