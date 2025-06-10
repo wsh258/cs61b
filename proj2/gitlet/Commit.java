@@ -6,13 +6,11 @@ import static gitlet.Utils.*;
 
 import java.io.File;
 import java.io.Serializable;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Locale;
+import java.util.*;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -35,27 +33,41 @@ public class Commit implements Serializable {
     /* TODO: fill in the rest of this class. */
     //标记该commit的保存对象的变量
     private HashMap <String,String> blobs = new HashMap<>();
-    private final String parent;
+    private List<String> parents = new ArrayList<>();;
     static final File commitFolder = join(Repository.GITLET_DIR,"commits");
     static final File blobsFolder = join(Repository.GITLET_DIR,"blobs");
 
     public Commit(String message, String timestamp, String parent) {
         this.message = message;
-        this.timestamp = timestamp;
-        this.parent = parent;
-        if (this.parent == null) {
+        if (parent != null) {
+            this.parents = new ArrayList<>();
+            this.parents.add(parent);
+            this.timestamp = timestamp;
+        } else {
+            // initial commit
             Instant epoch = Instant.ofEpochMilli(0);
-            // 转换为本地时区时间
             ZonedDateTime dateTime = epoch.atZone(ZoneId.systemDefault());
-            // 格式化输出
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
                     "E MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
             this.timestamp = dateTime.format(formatter);
         }
     }
 
+    public Commit(String message, String timestamp, String parent1, String parent2) {
+        this.message = message;
+        this.timestamp = timestamp;
+        this.parents = new ArrayList<>();
+        this.parents.add(parent1);
+        this.parents.add(parent2);
+    }
+
+    public boolean isMergeCommit() {
+        return parents.size() > 1;
+    }
+
+
     public String saveCommit() {
-        File f = join(commitFolder, Utils.sha1(this));
+        File f = join(commitFolder, sha1(this));
         writeObject(f,this);
         return sha1(this);
     }
@@ -80,7 +92,15 @@ public class Commit implements Serializable {
     }
 
     public String getParent() {
-        return parent;
+        return parents.get(0);
+    }
+
+    public String getParents() {
+        if (!isMergeCommit()) {
+            return parents.get(0);
+        }
+        return parents.get(0).substring(0, 7) + " " + parents.get(1).substring(0,7);
+
     }
 
     public String getTimestamp() {

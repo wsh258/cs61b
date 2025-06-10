@@ -3,7 +3,9 @@ package gitlet;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 import static gitlet.Utils.*;
@@ -132,11 +134,24 @@ public class Repository {
 
     public static void printLog() {
         Commit currentCommit = getHead();
+        /*TODO：For merge commits (those that have two parent commits), add a line just below the first, as in Merge: 4975af1 2c1ead1
+        其中，“Merge:”后面的两个十六进制数由第一个和第二个父提交的前七位提交 ID 组成，
+        顺序为先第一个父提交，后第二个父提交。第一个父提交是你进行合并时所在的分支；第二个父提交是被合并进来的分支。这与常规的 Git 一致。*/
         while (currentCommit != null){
-            String sb = "===\n" +
-                    "commit " + sha1(currentCommit) + "\n" +
-                    "Date: " + currentCommit.getTimestamp() + "\n" +
-                    currentCommit.getMessage();
+            String sb;
+            if (!currentCommit.isMergeCommit()) {
+                sb = "===\n" +
+                        "commit " + sha1(currentCommit) + "\n" +
+                        "Date: " + currentCommit.getTimestamp() + "\n" +
+                        currentCommit.getMessage();
+            }
+            else {
+                sb = "===\n" +
+                        "commit " + sha1(currentCommit) + "\n" + "Merge: " +
+                        currentCommit.getParents() + "\n" +
+                        "Date: " + currentCommit.getTimestamp() + "\n" +
+                        currentCommit.getMessage();
+            }
 
             message(sb);
 
@@ -146,6 +161,44 @@ public class Repository {
             }
             currentCommit = Commit.fromFile(parentSha);
         }
+    }
+    public static void printGlobalLog() {
+        List<String> allCommit = plainFilenamesIn(commitFolder);
+        if (allCommit != null) {
+            for (String currentCommitStr : allCommit) {
+                String sb;
+                Commit currentCommit = Commit.fromFile(currentCommitStr);
+                if (!currentCommit.isMergeCommit()) {
+                    sb = "===\n" +
+                            "commit " + sha1(currentCommit) + "\n" +
+                            "Date: " + currentCommit.getTimestamp() + "\n" +
+                            currentCommit.getMessage();
+                } else {
+                    sb = "===\n" +
+                            "commit " + sha1(currentCommit) + "\n" + "Merge: " +
+                            currentCommit.getParents() + "\n" +
+                            "Date: " + currentCommit.getTimestamp() + "\n" +
+                            currentCommit.getMessage();
+                }
+            }
+        }
+    }
+    public static void find(String message) {
+        List<String> allCommit = plainFilenamesIn(commitFolder);
+        if (allCommit != null) {
+            boolean havaMatch = false;
+            for (String currentCommitStr : allCommit) {
+                Commit currentCommit = Commit.fromFile(currentCommitStr);
+                if (currentCommit.getMessage().equals(message)) {
+                    message(currentCommitStr);
+                    havaMatch = true;
+                }
+            }
+            if (!havaMatch) {
+                message("Found no commit with that message.");
+            }
+        }
+
     }
 
 }
