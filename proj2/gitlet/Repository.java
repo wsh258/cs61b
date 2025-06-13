@@ -462,7 +462,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         for (String fileName : commitBeforeChange.getBlobs().keySet()) {
             if (!newBranchCommit.getBlobs().containsKey(fileName)) {
                 File fileInCWD = join(CWD, fileName);
-                restrictedDelete(fileInCWD);  // 删除工作目录里旧分支特有的文件
+                fileInCWD.delete();
             }
         }
 
@@ -481,6 +481,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             System.exit(0);
         }
         branches.put(branchName,getHead().getSha());
+        saveBranchesMap();
     }
 
     public static void rmBranch(String branchName) {
@@ -531,7 +532,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         for (String fileName : commitBeforeChange.getBlobs().keySet()) {
             if (!targetCommit.getBlobs().containsKey(fileName)) {
                 File fileInCWD = join(CWD, fileName);
-                restrictedDelete(fileInCWD);  // 删除工作目录里旧分支特有的文件
+                fileInCWD.delete();  // 删除工作目录里旧分支特有的文件
             }
         }
 
