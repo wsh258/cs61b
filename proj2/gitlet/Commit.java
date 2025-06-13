@@ -67,9 +67,9 @@ public class Commit implements Serializable {
 
 
     public String saveCommit() {
-        File f = join(commitFolder, sha1(this));
+        File f = join(commitFolder, getSha());
         writeObject(f,this);
-        return sha1(this);
+        return getSha();
     }
 
     public static Commit fromFile(String SHA) {
@@ -114,5 +114,25 @@ public class Commit implements Serializable {
         }
         saveCommit();
     }
+
+    public String getSha() {
+        List<Object> shaInput = new ArrayList<>();
+        shaInput.add(message);
+        shaInput.add(timestamp);
+
+        // 多个 parent 要保持顺序一致
+        shaInput.addAll(parents);
+
+        // 将 blobs 按文件名排序后拼接，确保顺序一致
+        List<String> sortedBlobKeys = new ArrayList<>(blobs.keySet());
+        Collections.sort(sortedBlobKeys);
+        for (String fileName : sortedBlobKeys) {
+            shaInput.add(fileName);
+            shaInput.add(blobs.get(fileName));
+        }
+
+        return Utils.sha1(shaInput);
+    }
+
 
 }

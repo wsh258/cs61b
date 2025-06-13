@@ -1,5 +1,7 @@
 package gitlet;
 
+import gitlet.Repository;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
  */
@@ -9,24 +11,144 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
         if (args.length == 0) {
             System.out.println("Please enter a command.");
             System.exit(0);
         }
+
         String firstArg = args[0];
-        switch(firstArg) {
+        switch (firstArg) {
             case "init":
-                // TODO: handle the `init` command
+                initHandler(args);
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                addHandler(args);
                 break;
-            // TODO: FILL THE REST IN
-            default: {
-                System.out.println("Please enter a command.");
+            case "commit":
+                commitHandler(args);
+                break;
+            case "rm":
+                rmHandler(args);
+                break;
+            case "log":
+                logHandler(args);
+                break;
+            case "global-log":
+                globalLogHandler(args);
+                break;
+            case "find":
+                findHandler(args);
+                break;
+            case "status":
+                statusHandler(args);
+                break;
+            case "checkout":
+                checkoutHandler(args);
+                break;
+//            case "branch":
+//                branchHandler(args);
+//                break;
+//            case "rm-branch":
+//                rmBranchHandler(args);
+//                break;
+//            case "reset":
+//                resetHandler(args);
+//                break;
+//            case "merge":
+//                mergeHandler(args);
+//                break;
+            default:
+                System.out.println("No command with that name exists.");
                 System.exit(0);
-            }
         }
     }
+
+
+    public static void initHandler(String[] args) {
+        if (args.length == 1 && args[0].equals("init")) {
+            Repository.glInit();
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void addHandler(String[] args) {
+        if (args.length == 2 && args[0].equals("add")) {
+            Repository.stagedForAddition(args[1]);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void commitHandler(String[] args) {
+        if (args.length == 2 && args[0].equals("commit")) {
+            Repository.commitCommands(args[1]);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void rmHandler(String[] args) {
+        if (args.length == 2 && args[0].equals("rm")) {
+            Repository.stagedForRemoval(args[1]);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void logHandler(String[] args) {
+        if (args.length == 1 && args[0].equals("log")) {
+            Repository.printLog();
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void globalLogHandler(String[] args) {
+        if (args.length == 1 && args[0].equals("global-log")) {
+            Repository.printGlobalLog();
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+
+    public static void findHandler(String[] args) {
+        if (args.length == 2 && args[0].equals("find")) {
+            Repository.find(args[1]);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void statusHandler(String[] args) {
+        if (args.length == 1 && args[0].equals("status")) {
+            Repository.status();
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void checkoutHandler(String[] args) {
+        if (args.length == 3 && args[1].equals("--")) {
+            Repository.checkoutFileFromHead(args[2]);
+        } else if (args.length == 4 && args[2].equals("--")) {
+            Repository.checkoutFileFromCommit(args[1], args[3]);
+        } else if (args.length == 2) {
+            Repository.checkoutBranch(args[1]);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+
 }

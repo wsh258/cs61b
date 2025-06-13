@@ -16,8 +16,11 @@ public class Stage implements Serializable {
     public static final File StageFolder = join(GITLET_DIR, ".stage");
 
     public void saveStage() {
+        if (!StageFolder.exists()) {
+            StageFolder.mkdir();
+        }
         File f = join(StageFolder, "sd");
-        writeObject(f,this);
+        writeObject(f, this);
     }
 
     public static Stage fromFile() {
@@ -28,4 +31,8 @@ public class Stage implements Serializable {
         return readObject(existStage, Stage.class);
     }
 
+    public static void clear() {
+        File f = join(StageFolder, "sd");
+        restrictedDelete(f);
+    }
 }
