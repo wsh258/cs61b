@@ -25,8 +25,7 @@ public class Repository {
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
      */
-    static final File commitFolder = join(Repository.GITLET_DIR, "commits");
-    static final File blobsFolder = join(Repository.GITLET_DIR, "blobs");
+
     /**
      * The current working directory.
      */
@@ -35,6 +34,8 @@ public class Repository {
      * The .gitlet directory.
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    static final File commitFolder = join(GITLET_DIR, "commits");
+    static final File blobsFolder = join(GITLET_DIR, "blobs");
     HashMap<String, String> commitSHA = new HashMap<>();
     public static final File HeadFile = join(GITLET_DIR,"Head");
     /** 保存分支名 -> commit ID 的映射 */
