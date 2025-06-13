@@ -157,7 +157,7 @@ public class Repository {
             Stage sdd =  Stage.fromFile();
             sdd.removal.put(fileName,getHead().getBlobs().get(fileName));
             sdd.saveStage();
-            restrictedDelete(thisremoveFile);
+            thisremoveFile.delete();
         }
     }
 
