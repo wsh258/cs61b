@@ -474,6 +474,79 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         }
         Stage.clear();
     }
+    public static void Branch(String branchName) {
+        BranchesMapFromFile();
+        if (branches.containsKey(branchName)) {
+            message("A branch with that name already exists.");
+            System.exit(0);
+        }
+        branches.put(branchName,getHead().getSha());
+    }
+
+    public static void rmBranch(String branchName) {
+        BranchesMapFromFile();
+        CurrentBranchFromFile();
+        if (!branches.containsKey(branchName)) {
+            message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if (branchName.equals(currentBranch)) {
+            message("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        branches.remove(branchName);
+    }
+
+
+    public static void reset(String commitID) {
+        List<String> allCommit = plainFilenamesIn(commitFolder);
+        if (findCommit(commitID) == null) {
+            message("No commit with that id exists.");
+            System.exit(0);
+        }
+        String completeSHA = findCommit(commitID);
+
+        Commit targetCommit = Commit.fromFile(completeSHA);
+        HashMap<String, String> thisBlobs = targetCommit.getBlobs();
+        BranchesMapFromFile();
+        CurrentBranchFromFile();
+
+        List<String> allFilesInCWD = plainFilenamesIn(CWD);
+        Commit commitBeforeChange = getHead();
+
+        if (allFilesInCWD != null) {
+            for (String fileName : allFilesInCWD) {
+                boolean isTrackedInHEAD = commitBeforeChange.getBlobs().containsKey(fileName);
+                boolean isInStagedAdd = Stage.fromFile().addition.containsKey(fileName);
+                boolean isInStagedRemove = Stage.fromFile().removal.containsKey(fileName);
+                boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
+
+                if (isUntracked && targetCommit.getBlobs().containsKey(fileName)) {
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+
+        for (String fileName : commitBeforeChange.getBlobs().keySet()) {
+            if (!targetCommit.getBlobs().containsKey(fileName)) {
+                File fileInCWD = join(CWD, fileName);
+                restrictedDelete(fileInCWD);  // 删除工作目录里旧分支特有的文件
+            }
+        }
+
+
+        for (String newCommitBlob : targetCommit.getBlobs().keySet()) {
+            File blobFile = join(blobsFolder, targetCommit.getBlobs().get(newCommitBlob));
+            File copyFile = join(CWD,newCommitBlob);
+            writeContents(copyFile,readContentsAsString(blobFile));
+        }
+        Stage.clear();
+
+        changeHead(targetCommit);
+        branches.put(currentBranch,completeSHA);
+        saveBranchesMap();
+    }
 
 
 

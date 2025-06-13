@@ -1,9 +1,5 @@
 package gitlet;
 
-import gitlet.Repository;
-
-import static gitlet.Utils.message;
-
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
  */
@@ -47,18 +43,18 @@ public class Main {
             case "checkout":
                 checkoutHandler(args);
                 break;
-//            case "branch":
-//                branchHandler(args);
-//                break;
-//            case "rm-branch":
-//                rmBranchHandler(args);
-//                break;
-//            case "reset":
-//                resetHandler(args);
-//                break;
-//            case "merge":
-//                mergeHandler(args);
-//                break;
+            case "branch":
+                branchHandler(args);
+                break;
+            case "rm-branch":
+                rmBranchHandler(args);
+                break;
+            case "reset":
+                resetHandler(args);
+                break;
+            case "merge":
+                //mergeHandler(args);
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);
@@ -160,6 +156,62 @@ public class Main {
             System.exit(0);
         }
     }
+
+    public static void branchHandler(String[] args) {
+
+        if (args.length == 2 && args[0].equals("branch")) {
+            String BranchName = args[1];
+            if (BranchName.trim().isEmpty()) {
+                System.out.println("Please enter a branch name.");
+                System.exit(0);
+            }
+            Repository.Branch(BranchName);
+        } else if (args.length == 1 && args[0].equals("branch")) {
+            System.out.println("Please enter a branch name.");
+            System.exit(0);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void rmBranchHandler(String[] args) {
+        if (args.length == 2 && args[0].equals("rm-branch")) {
+            String BranchName = args[1];
+            if (BranchName.trim().isEmpty()) {
+                System.out.println("Please enter a branch name.");
+                System.exit(0);
+            }
+            Repository.rmBranch(BranchName);
+        } else if (args.length == 1 && args[0].equals("branch")) {
+            System.out.println("Please enter a branch name.");
+            System.exit(0);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+    public static void resetHandler(String[] args) {
+
+        if (args.length == 2 && args[0].equals("reset")) {
+            String commitMessage = args[1];
+            if (commitMessage.trim().isEmpty()) {
+                System.out.println("Please enter a commit id.");
+                System.exit(0);
+            }
+            Repository.commitCommands(commitMessage);
+        } else if (args.length == 1 && args[0].equals("reset")) {
+            System.out.println("Please enter a commit id.");
+            System.exit(0);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+
+
+
 
 
 }
