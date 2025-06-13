@@ -59,7 +59,8 @@ public class Repository {
             // 如果currentBranchfile是个文件，也要保证所在目录存在
             currentBranchfile.getParentFile().mkdirs();
         } else {
-            throw new GitletException("A Gitlet version-control system already exists in the current directory.");
+            message("A Gitlet version-control system already exists in the current directory.");
+            System.exit(0);
         }
         Commit initialCommit = new Commit("initial commit", null, null);
         changeHead(initialCommit);
@@ -158,9 +159,6 @@ public class Repository {
 
     public static void printLog() {
         Commit currentCommit = getHead();
-        /*TODO：For merge commits (those that have two parent commits), add a line just below the first, as in Merge: 4975af1 2c1ead1
-        其中，“Merge:”后面的两个十六进制数由第一个和第二个父提交的前七位提交 ID 组成，
-        顺序为先第一个父提交，后第二个父提交。第一个父提交是你进行合并时所在的分支；第二个父提交是被合并进来的分支。这与常规的 Git 一致。*/
         while (currentCommit != null){
             String sb;
             if (!currentCommit.isMergeCommit()) {
