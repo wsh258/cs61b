@@ -92,8 +92,8 @@ public class Repository {
         Stage sd =  Stage.fromFile();
         Commit Head = getHead();
 
-        if (sd.addition.containsValue(sha1(readContentsAsString(thisAddFile))) || Head.getBlobs().containsValue(readContentsAsString(thisAddFile))) {
-            sd.addition.remove(fileName, sha1(readContentsAsString(thisAddFile)));
+        if (sd.addition.containsKey(fileName) || Head.getBlobs().containsKey(fileName)) {
+            sd.addition.remove(fileName);
             return null;
         }
         sd.addition.put(fileName, sha1(readContentsAsString(thisAddFile)));
@@ -133,7 +133,7 @@ public class Repository {
     }
 
     public static String stagedForRemoval(String fileName) {
-        if (!getHead().getBlobs().containsKey(fileName) && !Stage.fromFile().removal.containsKey(fileName)) {
+        if (!getHead().getBlobs().containsKey(fileName) || !Stage.fromFile().removal.containsKey(fileName)) {
             message("No reason to remove the file.");
             System.exit(0);
         }
@@ -304,20 +304,20 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
                 message.append("\n").append(k);
             }
         }
-        message(message.toString());
+        message(message + "\n");
 
         Stage sd = Stage.fromFile();
         message = new StringBuilder("=== Staged Files ===");
         for (String k : sd.addition.keySet()) {
             message.append("\n").append(k);
         }
-        message(message.toString());
+        message(message + "\n");
 
         message = new StringBuilder("=== Removed Files ===");
         for (String k : sd.removal.keySet()) {
             message.append("\n").append(k);
         }
-        message(message.toString());
+        message(message + "\n");
 
         message = new StringBuilder("=== Modifications Not Staged For Commit ===");
 
@@ -350,7 +350,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
                 }
             }
         }
-        message(message.toString());
+        message(message + "\n");
 
 //        “未跟踪的文件”：
 //        是指：存在于工作目录中，但既没有被暂存添加，也没有被当前提交追踪。
@@ -367,7 +367,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
                 }
             }
         }
-        message(message.toString());
+        message(message + "\n");
     }
     // 从当前分支的 head commit 中取出 fileName 并覆盖工作目录中该文件
     public static void checkoutFileFromHead(String filename) {
