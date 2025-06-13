@@ -199,7 +199,7 @@ public class Main {
                 System.out.println("Please enter a commit id.");
                 System.exit(0);
             }
-            Repository.commitCommands(commitMessage);
+            Repository.reset(commitMessage);
         } else if (args.length == 1 && args[0].equals("reset")) {
             System.out.println("Please enter a commit id.");
             System.exit(0);
