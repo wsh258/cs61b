@@ -339,7 +339,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
                 String trackedContent = readContentsAsString(join(blobsFolder,getHead().getBlobs().get(fileName)));
 
                 if (!workingContent.equals(trackedContent) && !isInStagedAdd) {
-                    message.append(fileName).append(" (modified)");
+                    message.append("\n").append(fileName).append(" (modified)");
                 }
             } else if (!isInStagedRemove) {
                 message.append(fileName).append(" (deleted)");
