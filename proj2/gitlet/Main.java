@@ -2,6 +2,8 @@ package gitlet;
 
 import gitlet.Repository;
 
+import static gitlet.Utils.message;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
  */
@@ -83,6 +85,11 @@ public class Main {
     }
 
     public static void commitHandler(String[] args) {
+
+        if (args.length == 1 && args[0].equals("commit")) {
+            message("Please enter a commit message.");
+            System.exit(0);
+        }
         if (args.length == 2 && args[0].equals("commit")) {
             Repository.commitCommands(args[1]);
         } else {

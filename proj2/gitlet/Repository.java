@@ -69,11 +69,11 @@ public class Repository {
 
 
 
-    public static Commit getHead() {
+    private static Commit getHead() {
         return Commit.fromFile(readContentsAsString(HeadFile));
     }
 
-    public static void changeHead(Commit cm) {
+    private static void changeHead(Commit cm) {
         writeContents(HeadFile,cm.getSha());
     }
 
@@ -110,24 +110,22 @@ public class Repository {
 
 
 
-    public static String getFormattedTimestamp() {
+    private static String getFormattedTimestamp() {
         ZonedDateTime now = ZonedDateTime.now();  // 使用本地时区
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
                 "E MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
         return now.format(formatter);
     }
     public static String commitCommands(String message) {
-        if (message.isEmpty()) {
-            message("Please enter a commit message.");
-            System.exit(0);
-        }
-        Commit Head = getHead();
-        Commit newCommit = new Commit(message,getFormattedTimestamp(),Head.getSha());
-        newCommit.addBlobs(Head.getBlobs(),null);
+
         if (Stage.fromFile().addition.isEmpty() && Stage.fromFile().removal.isEmpty()) {
             message("No changes added to the commit.");
             System.exit(0);
         }
+
+        Commit Head = getHead();
+        Commit newCommit = new Commit(message,getFormattedTimestamp(),Head.getSha());
+        newCommit.addBlobs(Head.getBlobs(),null);
         newCommit.addBlobs(Stage.fromFile().addition,Stage.fromFile().removal);
 
         Stage stage = new Stage();
@@ -182,6 +180,7 @@ public class Repository {
             }
 
             message(sb);
+            System.out.println(); // 再打一个空行
 
             String parentSha = currentCommit.getParent();
             if (parentSha == null) {
@@ -231,13 +230,13 @@ public class Repository {
 
 
 
-    public static void saveBranchesMap() {
+    private static void saveBranchesMap() {
         HashMap<String, String> dataToSave = new HashMap<>(branches);
         writeObject(branch, dataToSave);
     }
 
     @SuppressWarnings("unchecked")
-    public static void BranchesMapFromFile() {
+    private static void BranchesMapFromFile() {
         if (branch.exists()) {
             branches = (HashMap<String, String>)readObject(branch, HashMap.class);
         } else {
@@ -245,12 +244,12 @@ public class Repository {
         }
     }
 
-    public static void saveCurrentBranch() {
+    private static void saveCurrentBranch() {
         String dataToSave = currentBranch;
         writeObject(currentBranchfile, dataToSave);
     }
 
-    public static void CurrentBranchFromFile() {
+    private static void CurrentBranchFromFile() {
         if (currentBranchfile.exists()) {
             currentBranch = readObject(currentBranchfile, String.class);
         } else {
@@ -258,13 +257,13 @@ public class Repository {
         }
     }
 
-    public static void changeBranchCommitAndSave(Commit commit) {
+    private static void changeBranchCommitAndSave(Commit commit) {
         BranchesMapFromFile();
         branches.put(currentBranch,commit.saveCommit());
         saveBranchesMap();
     }
 
-    public static void changeCurrentBranch(String branch) {
+    private static void changeCurrentBranch(String branch) {
         currentBranch = branch;
         changeHead(Commit.fromFile(branches.get(currentBranch)));
         saveCurrentBranch();
