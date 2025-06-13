@@ -9,17 +9,14 @@ import java.util.Locale;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
 
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author Sihao Wong
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      * <p>
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -42,7 +39,7 @@ public class Repository {
     private static HashMap<String, String> branches;
 
     /** 当前分支名（如 "master"） */
-    private static String currentBranch = "mater";
+    private static String currentBranch = "master";
 
     static final File branch = join(GITLET_DIR, "branches","branchMap");
     static final File currentBranchfile = join(GITLET_DIR, "branches","currentBranch");
@@ -51,15 +48,24 @@ public class Repository {
     String currentCommit;
 
     public static void glInit() {
-        if (GITLET_DIR.mkdir()) {
-            commitFolder.mkdir();
-        } else {
-            throw new GitletException("A Gitlet version-control system already exists in the current directory.");
+        public static void glInit() {
+            if (GITLET_DIR.mkdir()) {
+                commitFolder.mkdir();
+                blobsFolder.mkdir();
+                // 新增创建 branches 目录
+                File branchesDir = join(GITLET_DIR, "branches");
+                branchesDir.mkdir();
+
+                // 如果currentBranchfile是个文件，也要保证所在目录存在
+                currentBranchfile.getParentFile().mkdirs();
+            } else {
+                throw new GitletException("A Gitlet version-control system already exists in the current directory.");
+            }
+            Commit initialCommit = new Commit("initial commit", null, null);
+            changeHead(initialCommit);
+            changeBranchCommitAndSave(initialCommit);
         }
-        Commit initialCommit = new Commit("initial commit", null, null);
-        changeHead(initialCommit);
-        commitFolder.mkdir();
-        changeBranchCommitAndSave(initialCommit);
+
     }
 
     public static Commit getHead() {
