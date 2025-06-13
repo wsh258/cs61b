@@ -476,7 +476,6 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
         currentBranch = branchName;
         saveCurrentBranch();
-        saveBranchesMap();
         changeHead(newBranchCommit);
         Stage.clear();
     }
