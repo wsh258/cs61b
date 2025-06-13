@@ -479,6 +479,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         changeHead(newBranchCommit);
         Stage.clear();
     }
+
     public static void Branch(String branchName) {
         BranchesMapFromFile();
         if (branches.containsKey(branchName)) {
