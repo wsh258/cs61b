@@ -496,6 +496,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             System.exit(0);
         }
         branches.remove(branchName);
+        saveBranchesMap();
     }
 
 
