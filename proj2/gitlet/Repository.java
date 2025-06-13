@@ -47,26 +47,26 @@ public class Repository {
     Commit Head;
     String currentCommit;
 
+
     public static void glInit() {
-        public static void glInit() {
-            if (GITLET_DIR.mkdir()) {
-                commitFolder.mkdir();
-                blobsFolder.mkdir();
-                // 新增创建 branches 目录
-                File branchesDir = join(GITLET_DIR, "branches");
-                branchesDir.mkdir();
+        if (GITLET_DIR.mkdir()) {
+            commitFolder.mkdir();
+            blobsFolder.mkdir();
+            // 新增创建 branches 目录
+            File branchesDir = join(GITLET_DIR, "branches");
+            branchesDir.mkdir();
 
-                // 如果currentBranchfile是个文件，也要保证所在目录存在
-                currentBranchfile.getParentFile().mkdirs();
-            } else {
-                throw new GitletException("A Gitlet version-control system already exists in the current directory.");
-            }
-            Commit initialCommit = new Commit("initial commit", null, null);
-            changeHead(initialCommit);
-            changeBranchCommitAndSave(initialCommit);
+            // 如果currentBranchfile是个文件，也要保证所在目录存在
+            currentBranchfile.getParentFile().mkdirs();
+        } else {
+            throw new GitletException("A Gitlet version-control system already exists in the current directory.");
         }
-
+        Commit initialCommit = new Commit("initial commit", null, null);
+        changeHead(initialCommit);
+        changeBranchCommitAndSave(initialCommit);
     }
+
+
 
     public static Commit getHead() {
         return Commit.fromFile(readContentsAsString(HeadFile));
