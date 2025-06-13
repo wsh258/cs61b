@@ -477,11 +477,13 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
     }
     public static void Branch(String branchName) {
         BranchesMapFromFile();
+        currentBranch = branchName;
         if (branches.containsKey(branchName)) {
             message("A branch with that name already exists.");
             System.exit(0);
         }
         branches.put(branchName,getHead().getSha());
+        saveCurrentBranch();
         saveBranchesMap();
     }
 
