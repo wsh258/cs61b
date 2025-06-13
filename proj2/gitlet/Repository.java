@@ -207,6 +207,9 @@ public class Repository {
                             "Date: " + currentCommit.getTimestamp() + "\n" +
                             currentCommit.getMessage();
                 }
+                message(sb);
+                System.out.println(); // 再打一个空行
+
             }
         }
     }

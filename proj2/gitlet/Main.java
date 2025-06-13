@@ -86,12 +86,16 @@ public class Main {
 
     public static void commitHandler(String[] args) {
 
-        if (args.length == 1 && args[0].equals("commit")) {
-            message("Please enter a commit message.");
-            System.exit(0);
-        }
         if (args.length == 2 && args[0].equals("commit")) {
-            Repository.commitCommands(args[1]);
+            String commitMessage = args[1];
+            if (commitMessage.trim().isEmpty()) {
+                System.out.println("Please enter a commit message.");
+                System.exit(0);
+            }
+            Repository.commitCommands(commitMessage);
+        } else if (args.length == 1 && args[0].equals("commit")) {
+            System.out.println("Please enter a commit message.");
+            System.exit(0);
         } else {
             System.out.println("Incorrect operands.");
             System.exit(0);

@@ -118,7 +118,6 @@ public class Commit implements Serializable {
         if(stageRemovement != null) {
             removeSamekey(blobs, stageRemovement);
         }
-        saveCommit();
     }
 
     public String getSha() {
