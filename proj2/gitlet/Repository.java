@@ -420,9 +420,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             File thisFile = join(CWD,filename);
             File replaceFile = join(blobsFolder,thisBlobs.get(filename));
             writeContents(thisFile,readContentsAsString(replaceFile));
-            Stage sd = Stage.fromFile();
-            sd.addition.put(filename,sha1(readContentsAsString(replaceFile)));
-            sd.saveStage();
+
         }
     }
 
