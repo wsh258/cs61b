@@ -78,28 +78,36 @@ public class Repository {
     }
 
     public static String stagedForAddition(String fileName) {
-        File thisAddFile = join(CWD, fileName);
-        if(!thisAddFile.exists()) {
+        File file = join(CWD, fileName);
+        if (!file.exists()) {
             message("File does not exist.");
             System.exit(0);
         }
 
-        File StageFolder = join(GITLET_DIR, ".stage");
+        String fileContent = readContentsAsString(file);
+        String fileSha1 = sha1(fileContent);
+        File blobFile = join(blobsFolder, fileSha1);
 
-        File addition = join(blobsFolder, sha1(readContentsAsString(thisAddFile)));
+        Commit head = getHead();
+        Stage stage = Stage.fromFile();
 
-        writeContents(addition,readContentsAsString(thisAddFile));
-        Stage sd =  Stage.fromFile();
-        Commit Head = getHead();
-
-        if (sd.addition.containsKey(fileName) || Head.getBlobs().containsKey(fileName)) {
-            sd.addition.remove(fileName);
+        // 如果当前文件内容与 HEAD 中版本相同，则不应添加到暂存区
+        if (fileSha1.equals(head.getBlobs().get(fileName))) {
+            // 如果之前已被暂存，则移除
+            stage.addition.remove(fileName);
+            stage.removal.remove(fileName);  // 若之前标记为删除，也移除
+            stage.saveStage();
             return null;
         }
-        sd.addition.put(fileName, sha1(readContentsAsString(thisAddFile)));
-        sd.saveStage();
-        return sha1(readContentsAsString(thisAddFile));
+
+        // 否则，写入 blob，并记录在 addition 中
+        writeContents(blobFile, fileContent);
+        stage.addition.put(fileName, fileSha1);
+        stage.removal.remove(fileName); // 若之前标记为删除，取消删除
+        stage.saveStage();
+        return fileSha1;
     }
+
 
 
     public static String getFormattedTimestamp() {
@@ -132,16 +140,15 @@ public class Repository {
         return newCommit.saveCommit();
     }
 
-    public static String stagedForRemoval(String fileName) {
-        if (!getHead().getBlobs().containsKey(fileName) || !Stage.fromFile().removal.containsKey(fileName)) {
+    public static void stagedForRemoval(String fileName) {
+        if (!getHead().getBlobs().containsKey(fileName) && !Stage.fromFile().addition.containsKey(fileName)) {
             message("No reason to remove the file.");
             System.exit(0);
         }
-        File thisremoveFile = join(CWD, fileName);
-        String removeSHA = sha1(readContentsAsString(thisremoveFile));
+        File thisremoveFile = join(CWD,fileName);
         //如果文件已被暂存添加（staged for addition） → 把它从暂存区移除。
         Stage sd =  Stage.fromFile();
-        sd.removal.remove(fileName);
+        sd.addition.remove(fileName);
         sd.saveStage();
         //如果文件在当前提交中被跟踪（tracked）：
         //把它标记为待删除（staged for removal）。
@@ -150,11 +157,10 @@ public class Repository {
         Commit Head = getHead();
         if (Head.getBlobs().containsKey(fileName)) {
             Stage sdd =  Stage.fromFile();
-            sdd.removal.put(fileName,sha1(readContentsAsString(thisremoveFile)));
+            sdd.removal.put(fileName,getHead().getBlobs().get(fileName));
             sdd.saveStage();
             restrictedDelete(thisremoveFile);
         }
-        return removeSHA;
     }
 
     public static void printLog() {
