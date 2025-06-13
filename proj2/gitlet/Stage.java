@@ -32,7 +32,7 @@ public class Stage implements Serializable {
     }
 
     public static void clear() {
-        File f = join(StageFolder, "sd");
-        restrictedDelete(f);
+        Stage stage = new Stage();
+        stage.saveStage();//清空Stage
     }
 }
