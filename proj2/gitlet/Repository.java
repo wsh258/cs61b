@@ -442,7 +442,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         }
         List<String> allFilesInCWD = plainFilenamesIn(CWD);
         Commit commitBeforeChange = getHead();
-        Commit newBranchCommit = Commit.fromFile(branches.get(currentBranch));
+        Commit newBranchCommit = Commit.fromFile(branches.get(branchName));
 
         if (allFilesInCWD != null) {
             for (String fileName : allFilesInCWD) {
@@ -458,7 +458,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
             }
         }
-        changeCurrentBranch(branchName);
+
 
         for (String fileName : commitBeforeChange.getBlobs().keySet()) {
             if (!newBranchCommit.getBlobs().containsKey(fileName)) {
@@ -473,18 +473,21 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             File copyFile = join(CWD,newCommitBlob);
             writeContents(copyFile,readContentsAsString(blobFile));
         }
+
+        currentBranch = branchName;
+        saveCurrentBranch();
+        saveBranchesMap();
+        changeHead(newBranchCommit);
         Stage.clear();
     }
     public static void Branch(String branchName) {
         BranchesMapFromFile();
-        currentBranch = branchName;
         if (branches.containsKey(branchName)) {
             message("A branch with that name already exists.");
             System.exit(0);
         }
         branches.put(branchName,getHead().getSha());
         saveCurrentBranch();
-        saveBranchesMap();
     }
 
     public static void rmBranch(String branchName) {
