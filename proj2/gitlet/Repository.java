@@ -444,11 +444,20 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         Commit commitBeforeChange = getHead();
         Commit newBranchCommit = Commit.fromFile(branches.get(branchName));
 
+        // ========= 加入這段除錯程式碼 =========
+        System.out.println("--- DEBUGGING CHECKOUT ---");
+        System.out.println("切換前 Commit 的檔案: " + commitBeforeChange.getBlobs().keySet());
+        System.out.println("目標 Commit 的檔案: " + newBranchCommit.getBlobs().keySet());
+        System.out.println("--------------------------");
+        // ===================================
+
+
         if (allFilesInCWD != null) {
+            Stage sd = Stage.fromFile();
             for (String fileName : allFilesInCWD) {
-                boolean isTrackedInHEAD = getHead().getBlobs().containsKey(fileName);
-                boolean isInStagedAdd = Stage.fromFile().addition.containsKey(fileName);
-                boolean isInStagedRemove = Stage.fromFile().removal.containsKey(fileName);
+                boolean isTrackedInHEAD = commitBeforeChange.getBlobs().containsKey(fileName);
+                boolean isInStagedAdd = sd.addition.containsKey(fileName);
+                boolean isInStagedRemove = sd.removal.containsKey(fileName);
                 boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
 
                 if (isUntracked && newBranchCommit.getBlobs().containsKey(fileName)) {
