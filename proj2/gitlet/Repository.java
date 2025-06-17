@@ -3,6 +3,7 @@ package gitlet;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -15,13 +16,6 @@ import static gitlet.Utils.*;
  *  @author Sihao Wong
  */
 public class Repository {
-    /**
-     * <p>
-     * List all instance variables of the Repository class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided two examples for you.
-     */
-
     /**
      * The current working directory.
      */
@@ -88,16 +82,16 @@ public class Repository {
         // 如果当前文件内容与 HEAD 中版本相同，则不应添加到暂存区
         if (fileSha1.equals(head.getBlobs().get(fileName))) {
             // 如果之前已被暂存，则移除
-            stage.addition.remove(fileName);
-            stage.removal.remove(fileName);  // 若之前标记为删除，也移除
+            stage.getAddition().remove(fileName);
+            stage.getRemoval().remove(fileName);  // 若之前标记为删除，也移除
             stage.saveStage();
             return null;
         }
 
         // 否则，写入 blob，并记录在 addition 中
         writeContents(blobFile, fileContent);
-        stage.addition.put(fileName, fileSha1);
-        stage.removal.remove(fileName); // 若之前标记为删除，取消删除
+        stage.getAddition().put(fileName, fileSha1);
+        stage.getRemoval().remove(fileName); // 若之前标记为删除，取消删除
         stage.saveStage();
         return fileSha1;
     }
@@ -112,7 +106,8 @@ public class Repository {
     }
     public static String commitCommands(String message) {
 
-        if (Stage.fromFile().addition.isEmpty() && Stage.fromFile().removal.isEmpty()) {
+        if (Stage.fromFile().getAddition().isEmpty()
+                && Stage.fromFile().getRemoval().isEmpty()) {
             message("No changes added to the commit.");
             System.exit(0);
         }
@@ -122,7 +117,7 @@ public class Repository {
 
         newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
         Stage sd = Stage.fromFile();
-        newCommit.addBlobs(sd.addition, sd.removal);
+        newCommit.addBlobs(sd.getAddition(), sd.getRemoval());
         Stage stage = new Stage();
         stage.saveStage();
         changeHead(newCommit);
@@ -131,14 +126,15 @@ public class Repository {
     }
 
     public static void stagedForRemoval(String fileName) {
-        if (!getHead().getBlobs().containsKey(fileName) && !Stage.fromFile().addition.containsKey(fileName)) {
+        if (!getHead().getBlobs().containsKey(fileName)
+                && !Stage.fromFile().getAddition().containsKey(fileName)) {
             message("No reason to remove the file.");
             System.exit(0);
         }
         File thisremoveFile = join(CWD, fileName);
         //如果文件已被暂存添加（staged for addition） → 把它从暂存区移除。
         Stage sd =  Stage.fromFile();
-        sd.addition.remove(fileName);
+        sd.getAddition().remove(fileName);
         sd.saveStage();
         //如果文件在当前提交中被跟踪（tracked）：
         //把它标记为待删除（staged for removal）。
@@ -147,7 +143,7 @@ public class Repository {
         Commit head = getHead();
         if (head.getBlobs().containsKey(fileName)) {
             Stage sdd =  Stage.fromFile();
-            sdd.removal.put(fileName, getHead().getBlobs().get(fileName));
+            sdd.getRemoval().put(fileName, getHead().getBlobs().get(fileName));
             sdd.saveStage();
             thisremoveFile.delete();
         }
@@ -307,13 +303,13 @@ public class Repository {
 
         Stage sd = Stage.fromFile();
         message = new StringBuilder("=== Staged Files ===");
-        for (String k : sd.addition.keySet()) {
+        for (String k : sd.getAddition().keySet()) {
             message.append("\n").append(k);
         }
         message(message + "\n");
 
         message = new StringBuilder("=== Removed Files ===");
-        for (String k : sd.removal.keySet()) {
+        for (String k : sd.getRemoval().keySet()) {
             message.append("\n").append(k);
         }
         message(message + "\n");
@@ -322,8 +318,8 @@ public class Repository {
 
         for (String fileName : getHead().getBlobs().keySet()) {
             File file = join(CWD, fileName);
-            boolean isInStagedAdd = sd.addition.containsKey(fileName);
-            boolean isInStagedRemove = sd.removal.containsKey(fileName);
+            boolean isInStagedAdd = sd.getAddition().containsKey(fileName);
+            boolean isInStagedRemove = sd.getRemoval().containsKey(fileName);
 
             if (file.exists()) {
                 String workingContent = readContentsAsString(file);
@@ -337,13 +333,13 @@ public class Repository {
             }
         }
 
-        for (String fileName : sd.addition.keySet()) {
+        for (String fileName : sd.getAddition().keySet()) {
             File file = join(CWD, fileName);
             if (!file.exists()) {
                 message.append(fileName).append(" (deleted)");
             } else {
                 String workingContent = readContentsAsString(file);
-                String stagedContent = readContentsAsString(join(BLOBSFOLDER, sd.addition.get(fileName)));
+                String stagedContent = readContentsAsString(join(BLOBSFOLDER, sd.getAddition().get(fileName)));
                 if (!workingContent.equals(stagedContent)) {
                     message.append(fileName).append(" (modified)");
                 }
@@ -361,7 +357,7 @@ public class Repository {
 
         if (allFiles != null) {
             for (String fileName : allFiles) {
-                if (!getHead().getBlobs().containsKey(fileName) && !sd.addition.containsKey(fileName)) {
+                if (!getHead().getBlobs().containsKey(fileName) && !sd.getAddition().containsKey(fileName)) {
                     message.append("\n").append(fileName);
                 }
             }
@@ -437,8 +433,8 @@ public class Repository {
             Stage sd = Stage.fromFile();
             for (String fileName : allFilesInCWD) {
                 boolean isTrackedInHEAD = commitBeforeChange.getBlobs().containsKey(fileName);
-                boolean isInStagedAdd = sd.addition.containsKey(fileName);
-                boolean isInStagedRemove = sd.removal.containsKey(fileName);
+                boolean isInStagedAdd = sd.getAddition().containsKey(fileName);
+                boolean isInStagedRemove = sd.getRemoval().containsKey(fileName);
                 boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
 
                 if (isUntracked && newBranchCommit.getBlobs().containsKey(fileName)) {
@@ -516,8 +512,8 @@ public class Repository {
         if (allFilesInCWD != null) {
             for (String fileName : allFilesInCWD) {
                 boolean isTrackedInHEAD = commitBeforeChange.getBlobs().containsKey(fileName);
-                boolean isInStagedAdd = Stage.fromFile().addition.containsKey(fileName);
-                boolean isInStagedRemove = Stage.fromFile().removal.containsKey(fileName);
+                boolean isInStagedAdd = Stage.fromFile().getAddition().containsKey(fileName);
+                boolean isInStagedRemove = Stage.fromFile().getRemoval().containsKey(fileName);
                 boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
 
                 if (isUntracked && targetCommit.getBlobs().containsKey(fileName)) {
@@ -547,8 +543,28 @@ public class Repository {
         saveBranchesMap();
     }
 
+    public static void merge(String targetBranch) {
 
+    }
+    private List<String> commitList(String BranchName) {
+        currentBranchFromFile();
+        branchesMapFromFile();
 
+        Commit currentBranchHead = getHead();
+        Commit targetBranchHead = Commit.fromFile(branches.get(targetBranch));
+
+        List<String> currentBranchCommits = new ArrayList<>();
+        Commit currentCommitForHeadBranch = getHead();
+
+        while (currentCommitForHeadBranch != null) {
+            currentBranchCommits.addFirst(currentCommitForHeadBranch.getSha());
+            String parentSha = currentCommitForHeadBranch.getParent();
+            if (parentSha == null) {
+                break;
+            }
+            currentCommitForHeadBranch = Commit.fromFile(parentSha);
+        }
+    }
 
 
 

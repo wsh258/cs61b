@@ -4,35 +4,40 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import static gitlet.Repository.CWD;
 import static gitlet.Repository.GITLET_DIR;
 import static gitlet.Utils.*;
-import static gitlet.Utils.readContentsAsString;
-import static gitlet.Utils.sha1;
 
 public class Stage implements Serializable {
-    public HashMap<String, String> addition= new HashMap<>();
-    public HashMap<String, String> removal= new HashMap<>();
-    public static final File StageFolder = join(GITLET_DIR, ".stage");
+    private HashMap<String, String> addition = new HashMap<>();
+    private HashMap<String, String> removal = new HashMap<>();
+    public static final File STAGE_FOLDER = join(GITLET_DIR, ".stage");
 
     public void saveStage() {
-        if (!StageFolder.exists()) {
-            StageFolder.mkdir();
+        if (!STAGE_FOLDER.exists()) {
+            STAGE_FOLDER.mkdir();
         }
-        File f = join(StageFolder, "sd");
+        File f = join(STAGE_FOLDER, "sd");
         writeObject(f, this);
     }
 
     public static Stage fromFile() {
-        File existStage = join(StageFolder, "sd");
+        File existStage = join(STAGE_FOLDER, "sd");
         if (!existStage.exists()) {
             return new Stage();
         }
         return readObject(existStage, Stage.class);
     }
 
+    public HashMap<String, String> getAddition() {
+        return addition;
+    }
+
+    public HashMap<String, String> getRemoval() {
+        return removal;
+    }
+
     public static void clear() {
         Stage stage = new Stage();
-        stage.saveStage();//清空Stage
+        stage.saveStage(); //清空Stage
     }
 }
