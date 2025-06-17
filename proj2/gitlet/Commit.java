@@ -1,7 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
-
 import static gitlet.Utils.*;
 
 import java.io.File;
@@ -13,29 +11,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author Sihao Wong
  */
 public class Commit implements Serializable {
-    /**
-     * TODO: add instance variables here.
-     *
-     * List all instance variables of the Commit class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided one example for `message`.
+    /*
+      List all instance variables of the Commit class here with a useful
+      comment above them describing what that variable represents and how that
+      variable is used. We've provided one example for `message`.
      */
 
     /** The message of this Commit. */
     private String message;
     private String timestamp;
-    /* TODO: fill in the rest of this class. */
-    //标记该commit的保存对象的变量
-    private HashMap <String,String> blobs = new HashMap<>();
-    private List<String> parents = new ArrayList<>();;
-    static final File commitFolder = join(Repository.GITLET_DIR,"commits");
-    static final File blobsFolder = join(Repository.GITLET_DIR,"blobs");
+
+    private HashMap<String, String> blobs = new HashMap<>();
+    private List<String> parents = new ArrayList<>();
+    static final File COMMITFOLDER = join(Repository.GITLET_DIR, "commits");
+    static final File BLOBSFOLDER = join(Repository.GITLET_DIR, "blobs");
 
     public Commit(String message, String timestamp, String parent) {
         this.message = message;
@@ -67,17 +61,17 @@ public class Commit implements Serializable {
 
 
     public String saveCommit() {
-        File f = join(commitFolder, this.getSha());
-        writeObject(f,this);
+        File f = join(COMMITFOLDER, this.getSha());
+        writeObject(f, this);
         return getSha();
     }
 
-    public static Commit fromFile(String SHA) {
-        File existCommit = join(commitFolder, SHA);
+    public static Commit fromFile(String sha) {
+        File existCommit = join(COMMITFOLDER, sha);
         return readObject(existCommit, Commit.class);
     }
 
-    public static void removeSamekey(HashMap<String,String> map1, HashMap<String,String> map2) {
+    public static void removeSamekey(HashMap<String, String> map1, HashMap<String, String> map2) {
         for (String key : map2.keySet()) {
             map1.remove(key);
         }
@@ -106,7 +100,7 @@ public class Commit implements Serializable {
         if (!isMergeCommit()) {
             return parents.get(0);
         }
-        return parents.get(0).substring(0, 7) + " " + parents.get(1).substring(0,7);
+        return parents.get(0).substring(0, 7) + " " + parents.get(1).substring(0, 7);
 
     }
 
@@ -114,19 +108,17 @@ public class Commit implements Serializable {
         return timestamp;
     }
 
-    public void addBlobs(HashMap<String,String> stageAddition, HashMap<String,String> stageRemovement) {
+    public void addBlobs(HashMap<String, String> stageAddition, HashMap<String, String> stageRemovement) {
         blobs.putAll(stageAddition);
-        if(stageRemovement != null) {
+        if (stageRemovement != null) {
             removeSamekey(blobs, stageRemovement);
         }
-//        message( "当前存储blobs" + blobs.toString());
     }
 
     public String getSha() {
         List<Object> shaInput = new ArrayList<>();
         shaInput.add(message);
         shaInput.add(timestamp);
-
         // 多个 parent 要保持顺序一致
         shaInput.addAll(parents);
 
@@ -137,9 +129,6 @@ public class Commit implements Serializable {
             shaInput.add(fileName);
             shaInput.add(blobs.get(fileName));
         }
-
         return Utils.sha1(shaInput);
     }
-
-
 }

@@ -1,7 +1,7 @@
 package gitlet;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+ *  @author Sihao Wong
  */
 public class Main {
 
@@ -160,12 +160,12 @@ public class Main {
     public static void branchHandler(String[] args) {
 
         if (args.length == 2 && args[0].equals("branch")) {
-            String BranchName = args[1];
-            if (BranchName.trim().isEmpty()) {
+            String branchName = args[1];
+            if (branchName.trim().isEmpty()) {
                 System.out.println("Please enter a branch name.");
                 System.exit(0);
             }
-            Repository.Branch(BranchName);
+            Repository.branch(branchName);
         } else if (args.length == 1 && args[0].equals("branch")) {
             System.out.println("Please enter a branch name.");
             System.exit(0);
@@ -177,12 +177,12 @@ public class Main {
 
     public static void rmBranchHandler(String[] args) {
         if (args.length == 2 && args[0].equals("rm-branch")) {
-            String BranchName = args[1];
-            if (BranchName.trim().isEmpty()) {
+            String branchName = args[1];
+            if (branchName.trim().isEmpty()) {
                 System.out.println("Please enter a branch name.");
                 System.exit(0);
             }
-            Repository.rmBranch(BranchName);
+            Repository.rmBranch(branchName);
         } else if (args.length == 1 && args[0].equals("branch")) {
             System.out.println("Please enter a branch name.");
             System.exit(0);

@@ -6,8 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-
 import static gitlet.Utils.*;
 
 
@@ -32,27 +30,22 @@ public class Repository {
      * The .gitlet directory.
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    static final File commitFolder = join(GITLET_DIR, "commits");
-    static final File blobsFolder = join(GITLET_DIR, "blobs");
-    HashMap<String, String> commitSHA = new HashMap<>();
-    public static final File HeadFile = join(GITLET_DIR,"Head");
+    static final File COMMITFOLDER = join(GITLET_DIR, "commits");
+    static final File BLOBSFOLDER = join(GITLET_DIR, "blobs");
+    public static final File HEADFILE = join(GITLET_DIR,  "Head");
     /** 保存分支名 -> commit ID 的映射 */
     private static HashMap<String, String> branches;
 
     /** 当前分支名（如 "master"） */
     private static String currentBranch;
 
-    static final File branch = join(GITLET_DIR, "branches","branchMap");
-    static final File currentBranchfile = join(GITLET_DIR, "branches","currentBranch");
-
-    Commit Head;
-    String currentCommit;
-
+    static final File BRANCH = join(GITLET_DIR, "branches", "branchMap");
+    static File currentBranchfile = join(GITLET_DIR, "branches", "currentBranch");
 
     public static void glInit() {
         if (GITLET_DIR.mkdir()) {
-            commitFolder.mkdir();
-            blobsFolder.mkdir();
+            COMMITFOLDER.mkdir();
+            BLOBSFOLDER.mkdir();
             // 新增创建 branches 目录
             File branchesDir = join(GITLET_DIR, "branches");
             branchesDir.mkdir();
@@ -71,11 +64,11 @@ public class Repository {
 
 
     private static Commit getHead() {
-        return Commit.fromFile(readContentsAsString(HeadFile));
+        return Commit.fromFile(readContentsAsString(HEADFILE));
     }
 
     private static void changeHead(Commit cm) {
-        writeContents(HeadFile,cm.getSha());
+        writeContents(HEADFILE, cm.getSha());
     }
 
     public static String stagedForAddition(String fileName) {
@@ -87,7 +80,7 @@ public class Repository {
 
         String fileContent = readContentsAsString(file);
         String fileSha1 = sha1(fileContent);
-        File blobFile = join(blobsFolder, fileSha1);
+        File blobFile = join(BLOBSFOLDER, fileSha1);
 
         Commit head = getHead();
         Stage stage = Stage.fromFile();
@@ -124,23 +117,16 @@ public class Repository {
             System.exit(0);
         }
 
-        Commit Head = getHead();
-        Commit newCommit = new Commit(message, getFormattedTimestamp(), Head.getSha());
+        Commit head = getHead();
+        Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha());
 
-// ❗真正的 fix：传入复制后的 blobs，而不是原始对象
-        HashMap<String, String> copiedBlobs = new HashMap<>(Head.getBlobs());
-        newCommit.addBlobs(copiedBlobs, null);  // 这样 newCommit 改的只是自己的 blobs
+        newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
         Stage sd = Stage.fromFile();
         newCommit.addBlobs(sd.addition, sd.removal);
-
-
         Stage stage = new Stage();
-        stage.saveStage();//清空Stage
-
+        stage.saveStage();
         changeHead(newCommit);
-
         changeBranchCommitAndSave(newCommit);
-
         return newCommit.saveCommit();
     }
 
@@ -149,7 +135,7 @@ public class Repository {
             message("No reason to remove the file.");
             System.exit(0);
         }
-        File thisremoveFile = join(CWD,fileName);
+        File thisremoveFile = join(CWD, fileName);
         //如果文件已被暂存添加（staged for addition） → 把它从暂存区移除。
         Stage sd =  Stage.fromFile();
         sd.addition.remove(fileName);
@@ -158,10 +144,10 @@ public class Repository {
         //把它标记为待删除（staged for removal）。
         //如果用户尚未删除该文件（即工作目录中还存在该文件）：
         //👉 从工作目录中将其物理删除（即 File.delete()）。
-        Commit Head = getHead();
-        if (Head.getBlobs().containsKey(fileName)) {
+        Commit head = getHead();
+        if (head.getBlobs().containsKey(fileName)) {
             Stage sdd =  Stage.fromFile();
-            sdd.removal.put(fileName,getHead().getBlobs().get(fileName));
+            sdd.removal.put(fileName, getHead().getBlobs().get(fileName));
             sdd.saveStage();
             thisremoveFile.delete();
         }
@@ -169,20 +155,18 @@ public class Repository {
 
     public static void printLog() {
         Commit currentCommit = getHead();
-        while (currentCommit != null){
+        while (currentCommit != null) {
             String sb;
             if (!currentCommit.isMergeCommit()) {
-                sb = "===\n" +
-                        "commit " + currentCommit.getSha() + "\n" +
-                        "Date: " + currentCommit.getTimestamp() + "\n" +
-                        currentCommit.getMessage();
-            }
-            else {
-                sb = "===\n" +
-                        "commit " + currentCommit.getSha() + "\n" + "Merge: " +
-                        currentCommit.getParents() + "\n" +
-                        "Date: " + currentCommit.getTimestamp() + "\n" +
-                        currentCommit.getMessage();
+                sb = "===\n" + "commit " + currentCommit.getSha() + "\n"
+                        + "Date: " + currentCommit.getTimestamp() + "\n"
+                        + currentCommit.getMessage();
+            } else {
+                sb = "===\n"
+                        + "commit " + currentCommit.getSha() + "\n" + "Merge: "
+                        + currentCommit.getParents() + "\n" + "Date: "
+                        + currentCommit.getTimestamp() + "\n"
+                        + currentCommit.getMessage();
             }
 
             message(sb);
@@ -196,22 +180,21 @@ public class Repository {
         }
     }
     public static void printGlobalLog() {
-        List<String> allCommit = plainFilenamesIn(commitFolder);
+        List<String> allCommit = plainFilenamesIn(COMMITFOLDER);
         if (allCommit != null) {
             for (String currentCommitStr : allCommit) {
                 String sb;
                 Commit currentCommit = Commit.fromFile(currentCommitStr);
                 if (!currentCommit.isMergeCommit()) {
-                    sb = "===\n" +
-                            "commit " + currentCommit.getSha() + "\n" +
-                            "Date: " + currentCommit.getTimestamp() + "\n" +
-                            currentCommit.getMessage();
+                    sb = "===\n"
+                            + "commit " + currentCommit.getSha() + "\n"
+                            + "Date: " + currentCommit.getTimestamp() + "\n"
+                            + currentCommit.getMessage();
                 } else {
-                    sb = "===\n" +
-                            "commit " + currentCommit.getSha() + "\n" + "Merge: " +
-                            currentCommit.getParents() + "\n" +
-                            "Date: " + currentCommit.getTimestamp() + "\n" +
-                            currentCommit.getMessage();
+                    sb = "===\n" + "commit " + currentCommit.getSha() + "\n" + "Merge: "
+                            + currentCommit.getParents() + "\n"
+                            + "Date: " + currentCommit.getTimestamp() + "\n"
+                            + currentCommit.getMessage();
                 }
                 message(sb);
                 System.out.println(); // 再打一个空行
@@ -221,7 +204,7 @@ public class Repository {
     }
 
     public static void find(String message) {
-        List<String> allCommit = plainFilenamesIn(commitFolder);
+        List<String> allCommit = plainFilenamesIn(COMMITFOLDER);
         if (allCommit != null) {
             boolean havaMatch = false;
             for (String currentCommitStr : allCommit) {
@@ -241,13 +224,13 @@ public class Repository {
 
     private static void saveBranchesMap() {
         HashMap<String, String> dataToSave = new HashMap<>(branches);
-        writeObject(branch, dataToSave);
+        writeObject(BRANCH, dataToSave);
     }
 
     @SuppressWarnings("unchecked")
-    private static void BranchesMapFromFile() {
-        if (branch.exists()) {
-            branches = (HashMap<String, String>)readObject(branch, HashMap.class);
+    private static void branchesMapFromFile() {
+        if (BRANCH.exists()) {
+            branches = (HashMap<String, String>) readObject(BRANCH, HashMap.class);
         } else {
             branches = new HashMap<>();  // 如果文件不存在，初始化为空
         }
@@ -258,7 +241,7 @@ public class Repository {
         writeObject(currentBranchfile, dataToSave);
     }
 
-    private static void CurrentBranchFromFile() {
+    private static void currentBranchFromFile() {
         if (currentBranchfile.exists()) {
             currentBranch = readObject(currentBranchfile, String.class);
         } else {
@@ -267,8 +250,8 @@ public class Repository {
     }
 
     private static void changeBranchCommitAndSave(Commit commit) {
-        BranchesMapFromFile();
-        CurrentBranchFromFile();  // ✅ 加上这行！
+        branchesMapFromFile();
+        currentBranchFromFile();  // ✅ 加上这行！
         branches.put(currentBranch, commit.saveCommit());
         saveBranchesMap();
     }
@@ -279,40 +262,41 @@ public class Repository {
         saveCurrentBranch();
     }
 
-/*
-=== Branches ===
-*master
-other-branch
+    /*
+    === Branches ===
+    *master
+    other-branch
 
-=== Staged Files ===
-wug.txt
-wug2.txt
+    === Staged Files ===
+    wug.txt
+    wug2.txt
 
-=== Removed Files ===
-goodbye.txt
+    === Removed Files ===
+    goodbye.txt
 
-=== Modifications Not Staged For Commit ===
-junk.txt (deleted)
-wug3.txt (modified)
+    === Modifications Not Staged For Commit ===
+    junk.txt (deleted)
+    wug3.txt (modified)
 
-=== Untracked Files ===
-random.stuff
+    === Untracked Files ===
+    random.stuff
 
-🟡 类型一：
-Tracked in current commit，工作目录中已被修改，但 没有重新添加（未暂存）处理方式：遍历当前 commit 的 blobs（tracked 文件）
-如果某文件存在于 working directory，但内容改变，且没有被暂存添加（staging area 中没有它或它的内容是旧的） ➤ 标记为 (modified)
-🟡 类型二：
-被暂存添加（staged for addition），但内容与工作目录中不同  处理方式：staging area for addition
-比较文件在工作目录和暂存区中的内容 ➤ 内容不同则标记为 (modified)
-🟡 类型三：
-被暂存添加，但在工作目录中已被删除  处理方式：遍历 staging area for addition如果文件在工作目录中不存在➤ 标记为 (deleted)
-🟡 类型四：
-当前 commit 中被追踪的文件（blobs）未被标记删除、但在工作目录中已删除，且没有被暂存删除   处理方式：遍历当前 commit 的 blobs文件在 working directory 中不存在并且没有在 staged for removal 中
-➤ 标记为 (deleted)
-*/
+    🟡 类型一：
+    Tracked in current commit，工作目录中已被修改，但 没有重新添加（未暂存）处理方式：遍历当前 commit 的 blobs（tracked 文件）
+    如果某文件存在于 working directory，但内容改变，且没有被暂存添加（staging area 中没有它或它的内容是旧的） ➤ 标记为 (modified)
+    🟡 类型二：
+    被暂存添加（staged for addition），但内容与工作目录中不同  处理方式：staging area for addition
+    比较文件在工作目录和暂存区中的内容 ➤ 内容不同则标记为 (modified)
+    🟡 类型三：
+    被暂存添加，但在工作目录中已被删除  处理方式：遍历 staging area for addition如果文件在工作目录中不存在➤ 标记为 (deleted)
+    🟡 类型四：
+    当前 commit 中被追踪的文件（blobs）未被标记删除、但在工作目录中已删除，且没有被暂存删除
+    处理方式：遍历当前 commit 的 blobs文件在 working directory 中不存在并且没有在 staged for removal 中
+    ➤ 标记为 (deleted)
+    */
     public static void status() {
-        BranchesMapFromFile();
-        CurrentBranchFromFile();
+        branchesMapFromFile();
+        currentBranchFromFile();
         StringBuilder message = new StringBuilder("=== Branches ===\n*" + currentBranch);
         for (String k : branches.keySet()) {
             if (!k.equals(currentBranch)) {
@@ -337,13 +321,13 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         message = new StringBuilder("=== Modifications Not Staged For Commit ===");
 
         for (String fileName : getHead().getBlobs().keySet()) {
-            File file = join(CWD,fileName);
+            File file = join(CWD, fileName);
             boolean isInStagedAdd = sd.addition.containsKey(fileName);
             boolean isInStagedRemove = sd.removal.containsKey(fileName);
 
             if (file.exists()) {
                 String workingContent = readContentsAsString(file);
-                String trackedContent = readContentsAsString(join(blobsFolder,getHead().getBlobs().get(fileName)));
+                String trackedContent = readContentsAsString(join(BLOBSFOLDER, getHead().getBlobs().get(fileName)));
 
                 if (!workingContent.equals(trackedContent) && !isInStagedAdd) {
                     message.append("\n").append(fileName).append(" (modified)");
@@ -354,12 +338,12 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         }
 
         for (String fileName : sd.addition.keySet()) {
-            File file = join(CWD,fileName);
+            File file = join(CWD, fileName);
             if (!file.exists()) {
                 message.append(fileName).append(" (deleted)");
             } else {
                 String workingContent = readContentsAsString(file);
-                String stagedContent = readContentsAsString(join(blobsFolder,sd.addition.get(fileName)));
+                String stagedContent = readContentsAsString(join(BLOBSFOLDER, sd.addition.get(fileName)));
                 if (!workingContent.equals(stagedContent)) {
                     message.append(fileName).append(" (modified)");
                 }
@@ -367,9 +351,9 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         }
         message(message + "\n");
 
-//        “未跟踪的文件”：
-//        是指：存在于工作目录中，但既没有被暂存添加，也没有被当前提交追踪。
-//        包括：之前标记为删除的文件，但后来在工作目录中被重新创建，Gitlet 并不知情。
+        //“未跟踪的文件”：
+        //是指：存在于工作目录中，但既没有被暂存添加，也没有被当前提交追踪。
+        //包括：之前标记为删除的文件，但后来在工作目录中被重新创建，Gitlet 并不知情。
 
         message = new StringBuilder("=== Untracked Files ===");
 
@@ -392,31 +376,31 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             message("File does not exist in that commit.");
             System.exit(0);
         } else {
-            File thisFile = join(CWD,filename);
-            File replaceFile = join(blobsFolder,thisBlobs.get(filename));
-            writeContents(thisFile,readContentsAsString(replaceFile));
+            File thisFile = join(CWD, filename);
+            File replaceFile = join(BLOBSFOLDER, thisBlobs.get(filename));
+            writeContents(thisFile, readContentsAsString(replaceFile));
         }
     }
 
-    private static String findCommit(String CommitSHA) {
-        List<String> allCommitID = plainFilenamesIn(commitFolder);
+    private static String findCommit(String commitSHA) {
+        List<String> allCommitID = plainFilenamesIn(COMMITFOLDER);
         if (allCommitID != null) {
             for (String commitID : allCommitID) {
-                if (commitID.startsWith(CommitSHA)) {
+                if (commitID.startsWith(commitSHA)) {
                     return commitID;
                 }
             }
         }
         return null;
     }
-//    从指定的 commit 中取出该文件版本，覆盖当前工作目录中的对应文件。也不会添加到暂存区。
-    public static void checkoutFileFromCommit(String CommitSHA,String filename) {
-        List<String> allCommit = plainFilenamesIn(commitFolder);
-        if (findCommit(CommitSHA) == null) {
+    //从指定的 commit 中取出该文件版本，覆盖当前工作目录中的对应文件。也不会添加到暂存区。
+    public static void checkoutFileFromCommit(String commitSHA, String filename) {
+        List<String> allCommit = plainFilenamesIn(COMMITFOLDER);
+        if (findCommit(commitSHA) == null) {
             message("No commit with that id exists.");
             System.exit(0);
         }
-        String completeSHA = findCommit(CommitSHA);
+        String completeSHA = findCommit(commitSHA);
 
         Commit thisCommit = Commit.fromFile(completeSHA);
         HashMap<String, String> thisBlobs = thisCommit.getBlobs();
@@ -424,9 +408,9 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             message("File does not exist in that commit.");
             System.exit(0);
         } else {
-            File thisFile = join(CWD,filename);
-            File replaceFile = join(blobsFolder,thisBlobs.get(filename));
-            writeContents(thisFile,readContentsAsString(replaceFile));
+            File thisFile = join(CWD, filename);
+            File replaceFile = join(BLOBSFOLDER, thisBlobs.get(filename));
+            writeContents(thisFile, readContentsAsString(replaceFile));
 
         }
     }
@@ -436,12 +420,12 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
     //    删除当前分支中被追踪、但在目标分支中不存在的文件。
     //    清空暂存区（除非目标分支就是当前分支）。 如果当前分支中有未被追踪的文件？
     public static void checkoutBranch(String branchName) {
-        BranchesMapFromFile();
+        branchesMapFromFile();
         if (!branches.containsKey(branchName)) {
             message("No such branch exists.");
             System.exit(0);
         }
-        CurrentBranchFromFile();
+        currentBranchFromFile();
         if (currentBranch.equals(branchName)) {
             message("No need to checkout the current branch.");
             System.exit(0);
@@ -449,12 +433,6 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         List<String> allFilesInCWD = plainFilenamesIn(CWD);
         Commit commitBeforeChange = getHead();
         Commit newBranchCommit = Commit.fromFile(branches.get(branchName));
-
-    //        message( currentBranch + "当前存储blobs" + commitBeforeChange.getBlobs().toString());
-    //
-    //        message( branchName + "当前存储blobs" + newBranchCommit.getBlobs().toString());
-    //
-
         if (allFilesInCWD != null) {
             Stage sd = Stage.fromFile();
             for (String fileName : allFilesInCWD) {
@@ -481,9 +459,9 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
 
         for (String newCommitBlob : newBranchCommit.getBlobs().keySet()) {
-            File blobFile = join(blobsFolder,newBranchCommit.getBlobs().get(newCommitBlob));
-            File copyFile = join(CWD,newCommitBlob);
-            writeContents(copyFile,readContentsAsString(blobFile));
+            File blobFile = join(BLOBSFOLDER, newBranchCommit.getBlobs().get(newCommitBlob));
+            File copyFile = join(CWD, newCommitBlob);
+            writeContents(copyFile, readContentsAsString(blobFile));
         }
         currentBranch = branchName;
         saveCurrentBranch();
@@ -493,19 +471,19 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
 
 
-    public static void Branch(String branchName) {
-        BranchesMapFromFile();
+    public static void branch(String branchName) {
+        branchesMapFromFile();
         if (branches.containsKey(branchName)) {
             message("A branch with that name already exists.");
             System.exit(0);
         }
-        branches.put(branchName,getHead().getSha());
+        branches.put(branchName, getHead().getSha());
         saveBranchesMap();
     }
 
     public static void rmBranch(String branchName) {
-        BranchesMapFromFile();
-        CurrentBranchFromFile();
+        branchesMapFromFile();
+        currentBranchFromFile();
         if (!branches.containsKey(branchName)) {
             message("A branch with that name does not exist.");
             System.exit(0);
@@ -520,7 +498,7 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
 
     public static void reset(String commitID) {
-        List<String> allCommit = plainFilenamesIn(commitFolder);
+        List<String> allCommit = plainFilenamesIn(COMMITFOLDER);
         if (findCommit(commitID) == null) {
             message("No commit with that id exists.");
             System.exit(0);
@@ -529,8 +507,8 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
         Commit targetCommit = Commit.fromFile(completeSHA);
         HashMap<String, String> thisBlobs = targetCommit.getBlobs();
-        BranchesMapFromFile();
-        CurrentBranchFromFile();
+        branchesMapFromFile();
+        currentBranchFromFile();
 
         List<String> allFilesInCWD = plainFilenamesIn(CWD);
         Commit commitBeforeChange = getHead();
@@ -558,16 +536,18 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
 
 
         for (String newCommitBlob : targetCommit.getBlobs().keySet()) {
-            File blobFile = join(blobsFolder, targetCommit.getBlobs().get(newCommitBlob));
-            File copyFile = join(CWD,newCommitBlob);
-            writeContents(copyFile,readContentsAsString(blobFile));
+            File blobFile = join(BLOBSFOLDER, targetCommit.getBlobs().get(newCommitBlob));
+            File copyFile = join(CWD, newCommitBlob);
+            writeContents(copyFile, readContentsAsString(blobFile));
         }
         Stage.clear();
 
         changeHead(targetCommit);
-        branches.put(currentBranch,completeSHA);
+        branches.put(currentBranch, completeSHA);
         saveBranchesMap();
     }
+
+
 
 
 
