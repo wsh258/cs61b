@@ -67,7 +67,7 @@ public class Commit implements Serializable {
 
 
     public String saveCommit() {
-        File f = join(commitFolder, getSha());
+        File f = join(commitFolder, this.getSha());
         writeObject(f,this);
         return getSha();
     }
@@ -83,9 +83,10 @@ public class Commit implements Serializable {
         }
     }
 
-    public HashMap <String,String> getBlobs() {
-        return this.blobs;
+    public HashMap<String, String> getBlobs() {
+        return new HashMap<>(blobs); // ✅ 返回副本，避免外部修改
     }
+
 
     public String getMessage() {
         return this.message;
@@ -118,6 +119,7 @@ public class Commit implements Serializable {
         if(stageRemovement != null) {
             removeSamekey(blobs, stageRemovement);
         }
+//        message( "当前存储blobs" + blobs.toString());
     }
 
     public String getSha() {

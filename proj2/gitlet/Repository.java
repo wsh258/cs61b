@@ -124,9 +124,12 @@ public class Repository {
         }
 
         Commit Head = getHead();
-        Commit newCommit = new Commit(message,getFormattedTimestamp(),Head.getSha());
-        newCommit.addBlobs(Head.getBlobs(),null);
-        newCommit.addBlobs(Stage.fromFile().addition,Stage.fromFile().removal);
+        Commit newCommit = new Commit(message, getFormattedTimestamp(), Head.getSha());
+
+// ❗真正的 fix：传入复制后的 blobs，而不是原始对象
+        HashMap<String, String> copiedBlobs = new HashMap<>(Head.getBlobs());
+        newCommit.addBlobs(copiedBlobs, null);  // 这样 newCommit 改的只是自己的 blobs
+        newCommit.addBlobs(Stage.fromFile().addition, Stage.fromFile().removal);
 
         Stage stage = new Stage();
         stage.saveStage();//清空Stage
@@ -444,13 +447,10 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         Commit commitBeforeChange = getHead();
         Commit newBranchCommit = Commit.fromFile(branches.get(branchName));
 
-        // ========= 加入這段除錯程式碼 =========
-        System.out.println("--- DEBUGGING CHECKOUT ---");
-        System.out.println("切換前 Commit 的檔案: " + commitBeforeChange.getBlobs().keySet());
-        System.out.println("目標 Commit 的檔案: " + newBranchCommit.getBlobs().keySet());
-        System.out.println("--------------------------");
-        // ===================================
-
+//        message( currentBranch + "当前存储blobs" + commitBeforeChange.getBlobs().toString());
+//
+//        message( branchName + "当前存储blobs" + newBranchCommit.getBlobs().toString());
+//
 
         if (allFilesInCWD != null) {
             Stage sd = Stage.fromFile();
@@ -482,7 +482,6 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
             File copyFile = join(CWD,newCommitBlob);
             writeContents(copyFile,readContentsAsString(blobFile));
         }
-
         currentBranch = branchName;
         saveCurrentBranch();
         changeHead(newBranchCommit);
