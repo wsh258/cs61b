@@ -40,7 +40,7 @@ public class Repository {
     private static HashMap<String, String> branches;
 
     /** 当前分支名（如 "master"） */
-    private static String currentBranch = "master";
+    private static String currentBranch;
 
     static final File branch = join(GITLET_DIR, "branches","branchMap");
     static final File currentBranchfile = join(GITLET_DIR, "branches","currentBranch");
@@ -431,41 +431,30 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
         }
     }
 
-//    将指定分支的最新提交中所有文件复制到工作目录（覆盖旧文件）。
-//    同时，将当前分支指向该分支。
-//    删除当前分支中被追踪、但在目标分支中不存在的文件。
-//    清空暂存区（除非目标分支就是当前分支）。 如果当前分支中有未被追踪的文件？
-
+    //    将指定分支的最新提交中所有文件复制到工作目录（覆盖旧文件）。
+    //    同时，将当前分支指向该分支。
+    //    删除当前分支中被追踪、但在目标分支中不存在的文件。
+    //    清空暂存区（除非目标分支就是当前分支）。 如果当前分支中有未被追踪的文件？
     public static void checkoutBranch(String branchName) {
         BranchesMapFromFile();
         if (!branches.containsKey(branchName)) {
-            message("[ERROR] No such branch exists: " + branchName);
+            message("No such branch exists.");
             System.exit(0);
         }
         CurrentBranchFromFile();
         if (currentBranch.equals(branchName)) {
-            message("[INFO] No need to checkout the current branch: " + branchName);
+            message("No need to checkout the current branch.");
             System.exit(0);
         }
-
+        List<String> allFilesInCWD = plainFilenamesIn(CWD);
         Commit commitBeforeChange = getHead();
         Commit newBranchCommit = Commit.fromFile(branches.get(branchName));
 
-        message("[INFO] 切换分支: " + currentBranch + " -> " + branchName);
-        message("[INFO] 当前分支: " + currentBranch);
-        message("[INFO] 目标分支: " + branchName);
+    //        message( currentBranch + "当前存储blobs" + commitBeforeChange.getBlobs().toString());
+    //
+    //        message( branchName + "当前存储blobs" + newBranchCommit.getBlobs().toString());
+    //
 
-        message("[DEBUG] 切换前分支 (" + currentBranch + ") blobs:");
-        for (Map.Entry<String, String> entry : commitBeforeChange.getBlobs().entrySet()) {
-            message("  " + entry.getKey() + " => " + entry.getValue());
-        }
-
-        message("[DEBUG] 目标分支 (" + branchName + ") blobs:");
-        for (Map.Entry<String, String> entry : newBranchCommit.getBlobs().entrySet()) {
-            message("  " + entry.getKey() + " => " + entry.getValue());
-        }
-
-        List<String> allFilesInCWD = plainFilenamesIn(CWD);
         if (allFilesInCWD != null) {
             Stage sd = Stage.fromFile();
             for (String fileName : allFilesInCWD) {
@@ -475,51 +464,33 @@ Tracked in current commit，工作目录中已被修改，但 没有重新添加
                 boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
 
                 if (isUntracked && newBranchCommit.getBlobs().containsKey(fileName)) {
-                    message("[ERROR] There is an untracked file in the way: " + fileName);
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
+
             }
         }
 
-        // 删除旧分支有新分支没有的文件
+
         for (String fileName : commitBeforeChange.getBlobs().keySet()) {
             if (!newBranchCommit.getBlobs().containsKey(fileName)) {
                 File fileInCWD = join(CWD, fileName);
-                if (fileInCWD.exists()) {
-                    message("[DEBUG] 删除文件: " + fileName);
-                    boolean deleted = fileInCWD.delete();
-                    message("[DEBUG] 删除结果: " + deleted);
-                }
+                fileInCWD.delete();
             }
         }
 
-        // 写入目标分支的文件
-        for (String fileName : newBranchCommit.getBlobs().keySet()) {
-            String blobHash = newBranchCommit.getBlobs().get(fileName);
-            File blobFile = join(blobsFolder, blobHash);
-            File copyFile = join(CWD, fileName);
 
-            String blobContent = readContentsAsString(blobFile);
-            message("[INFO] 写入文件: " + fileName + " 内容哈希: " + blobHash + " 内容长度: " + blobContent.length());
-            message("[DEBUG] Blob 文件内容预览: " + (blobContent.length() <= 20 ? blobContent : blobContent.substring(0, 20) + "..."));
-
-            writeContents(copyFile, blobContent);
-
-            String afterWriteContent = readContentsAsString(copyFile);
-            message("[DEBUG] 写入后文件内容预览: " + (afterWriteContent.length() <= 20 ? afterWriteContent : afterWriteContent.substring(0, 20) + "..."));
-
-            if (!afterWriteContent.equals(blobContent)) {
-                message("[ERROR] 写入文件内容与blob内容不一致: " + fileName);
-            }
+        for (String newCommitBlob : newBranchCommit.getBlobs().keySet()) {
+            File blobFile = join(blobsFolder,newBranchCommit.getBlobs().get(newCommitBlob));
+            File copyFile = join(CWD,newCommitBlob);
+            writeContents(copyFile,readContentsAsString(blobFile));
         }
-
         currentBranch = branchName;
         saveCurrentBranch();
         changeHead(newBranchCommit);
         Stage.clear();
-
-        message("[INFO] 切换分支完成，当前分支: " + currentBranch);
     }
+
 
 
     public static void Branch(String branchName) {
