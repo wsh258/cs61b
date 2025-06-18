@@ -94,8 +94,8 @@ public class Commit implements Serializable {
     }
 
     public String get2Parent() {
-        if (parents == null || parents.isEmpty()) {
-            return null; // 如果没有父节点，安全地返回 null
+        if (!isMergeCommit()) {
+            return null;
         }
         return parents.get(1);
     }
