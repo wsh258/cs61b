@@ -723,11 +723,13 @@ public class Repository {
             if (currentCommitSha == null || visited.contains(currentCommitSha)) {
                 continue;
             }
-            visited.add(currentCommitSha);
 
             if (targetBranchCommitList.contains(currentCommitSha)) {
                 return currentCommit;
             }
+
+            visited.add(currentCommitSha);
+
             String firstParent = currentCommit.getParent();
             if (firstParent != null) {
                 queue.offer(firstParent);
