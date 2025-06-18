@@ -593,29 +593,7 @@ public class Repository {
         allFiles.addAll(splitPointBlobs.keySet());
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
-        for (String blobsName : allFiles) {
-            if (!Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))
-                   && Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
-                if (targetBlobs.containsKey(blobsName)) {
-                    checkoutFileFromCommit(targetCommit.getSha(), blobsName);
-                    stagedForAddition(blobsName);
-                } else {
-                    stagedForRemoval(blobsName);
-                }
-            } else if (!Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName))
-                    && Objects.equals(targetBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
-                continue;
-            } else if (Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))) {
-                continue;
-            } else if (splitPointBlobs.containsKey(blobsName) && !currentBlobs.containsKey(blobsName)
-                    && !targetBlobs.containsKey(blobsName)) {
-                stagedForRemoval(blobsName);
-            } else {
-                hasConflict = true;
-                handleConflict(blobsName, currentBlobs, targetBlobs);
-                System.out.println("Encountered a merge conflict.");
-            }
-        }
+        hasConflict = processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
         if (!hasConflict) {
             commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
         } else {
@@ -630,6 +608,54 @@ public class Repository {
             newCommit.saveCommit();
         }
     }
+    private static boolean processMergeFiles(Commit splitPoint, Commit targetCommit,
+                                             HashMap<String, String> splitPointBlobs,
+                                             HashMap<String, String> currentBlobs,
+                                             HashMap<String, String> targetBlobs) {
+        boolean hasConflict = false;
+        HashSet<String> allFiles = new HashSet<>();
+        allFiles.addAll(splitPointBlobs.keySet());
+        allFiles.addAll(currentBlobs.keySet());
+        allFiles.addAll(targetBlobs.keySet());
+
+        for (String blobsName : allFiles) {
+            String splitBlob = splitPointBlobs.get(blobsName);
+            String currentBlob = currentBlobs.get(blobsName);
+            String targetBlob = targetBlobs.get(blobsName);
+
+            // Case 1: current 没变，target 改了 -> 使用 target 内容
+            if (!Objects.equals(targetBlob, currentBlob)
+                    && Objects.equals(currentBlob, splitBlob)) {
+                if (targetBlob != null) {
+                    checkoutFileFromCommit(targetCommit.getSha(), blobsName);
+                    stagedForAddition(blobsName);
+                } else {
+                    stagedForRemoval(blobsName);
+                }
+
+                // Case 2: target 没变，current 改了 -> 忽略
+            } else if (!Objects.equals(currentBlob, splitBlob)
+                    && Objects.equals(targetBlob, splitBlob)) {
+                continue;
+
+                // Case 3: target 和 current 都未改 -> 忽略
+            } else if (Objects.equals(targetBlob, currentBlob)) {
+                continue;
+
+                // Case 4: split 有，current 和 target 都删了 -> 移除文件
+            } else if (splitBlob != null && currentBlob == null && targetBlob == null) {
+                stagedForRemoval(blobsName);
+
+                // Case 5: 有冲突 -> 生成冲突内容
+            } else {
+                hasConflict = true;
+                handleConflict(blobsName, currentBlobs, targetBlobs);
+                System.out.println("Encountered a merge conflict.");
+            }
+        }
+        return hasConflict;
+    }
+
 
     private static void handleConflict(String fileName, Map<String, String> currentBlobs,
                                        Map<String, String> targetBlobs) {
