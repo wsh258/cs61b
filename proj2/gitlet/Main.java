@@ -53,7 +53,7 @@ public class Main {
                 resetHandler(args);
                 break;
             case "merge":
-                //mergeHandler(args);
+                mergeHandler(args);
                 break;
             default:
                 System.out.println("No command with that name exists.");
@@ -158,7 +158,6 @@ public class Main {
     }
 
     public static void branchHandler(String[] args) {
-
         if (args.length == 2 && args[0].equals("branch")) {
             String branchName = args[1];
             if (branchName.trim().isEmpty()) {
@@ -191,8 +190,8 @@ public class Main {
             System.exit(0);
         }
     }
-    public static void resetHandler(String[] args) {
 
+    public static void resetHandler(String[] args) {
         if (args.length == 2 && args[0].equals("reset")) {
             String commitMessage = args[1];
             if (commitMessage.trim().isEmpty()) {
@@ -202,6 +201,23 @@ public class Main {
             Repository.reset(commitMessage);
         } else if (args.length == 1 && args[0].equals("reset")) {
             System.out.println("Please enter a commit id.");
+            System.exit(0);
+        } else {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void mergeHandler(String[] args) {
+        if (args.length == 2 && args[0].equals("merge")) {
+            String branchName = args[1];
+            if (branchName.trim().isEmpty()) {
+                System.out.println("Please enter a branch name.");
+                System.exit(0);
+            }
+            Repository.merge(branchName);
+        } else if (args.length == 1 && args[0].equals("merge")) {
+            System.out.println("Please enter a branch name.");
             System.exit(0);
         } else {
             System.out.println("Incorrect operands.");

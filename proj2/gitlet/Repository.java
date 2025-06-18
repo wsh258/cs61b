@@ -3,10 +3,8 @@ package gitlet;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+
 import static gitlet.Utils.*;
 
 
@@ -26,11 +24,15 @@ public class Repository {
     public static final File GITLET_DIR = join(CWD, ".gitlet");
     static final File COMMITFOLDER = join(GITLET_DIR, "commits");
     static final File BLOBSFOLDER = join(GITLET_DIR, "blobs");
-    public static final File HEADFILE = join(GITLET_DIR,  "Head");
-    /** 保存分支名 -> commit ID 的映射 */
+    public static final File HEADFILE = join(GITLET_DIR, "Head");
+    /**
+     * 保存分支名 -> commit ID 的映射
+     */
     private static HashMap<String, String> branches;
 
-    /** 当前分支名（如 "master"） */
+    /**
+     * 当前分支名（如 "master"）
+     */
     private static String currentBranch;
 
     static final File BRANCH = join(GITLET_DIR, "branches", "branchMap");
@@ -56,7 +58,6 @@ public class Repository {
     }
 
 
-
     private static Commit getHead() {
         return Commit.fromFile(readContentsAsString(HEADFILE));
     }
@@ -65,7 +66,7 @@ public class Repository {
         writeContents(HEADFILE, cm.getSha());
     }
 
-    public static String stagedForAddition(String fileName) {
+    public static void stagedForAddition(String fileName) {
         File file = join(CWD, fileName);
         if (!file.exists()) {
             message("File does not exist.");
@@ -78,24 +79,21 @@ public class Repository {
 
         Commit head = getHead();
         Stage stage = Stage.fromFile();
-
         // 如果当前文件内容与 HEAD 中版本相同，则不应添加到暂存区
         if (fileSha1.equals(head.getBlobs().get(fileName))) {
             // 如果之前已被暂存，则移除
             stage.getAddition().remove(fileName);
             stage.getRemoval().remove(fileName);  // 若之前标记为删除，也移除
             stage.saveStage();
-            return null;
-        }
 
+        }
         // 否则，写入 blob，并记录在 addition 中
         writeContents(blobFile, fileContent);
         stage.getAddition().put(fileName, fileSha1);
         stage.getRemoval().remove(fileName); // 若之前标记为删除，取消删除
         stage.saveStage();
-        return fileSha1;
-    }
 
+    }
 
 
     private static String getFormattedTimestamp() {
@@ -104,7 +102,8 @@ public class Repository {
                 "E MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
         return now.format(formatter);
     }
-    public static String commitCommands(String message) {
+
+    public static void commitCommands(String message) {
 
         if (Stage.fromFile().getAddition().isEmpty()
                 && Stage.fromFile().getRemoval().isEmpty()) {
@@ -122,7 +121,7 @@ public class Repository {
         stage.saveStage();
         changeHead(newCommit);
         changeBranchCommitAndSave(newCommit);
-        return newCommit.saveCommit();
+        newCommit.saveCommit();
     }
 
     public static void stagedForRemoval(String fileName) {
@@ -133,7 +132,7 @@ public class Repository {
         }
         File thisremoveFile = join(CWD, fileName);
         //如果文件已被暂存添加（staged for addition） → 把它从暂存区移除。
-        Stage sd =  Stage.fromFile();
+        Stage sd = Stage.fromFile();
         sd.getAddition().remove(fileName);
         sd.saveStage();
         //如果文件在当前提交中被跟踪（tracked）：
@@ -142,7 +141,7 @@ public class Repository {
         //👉 从工作目录中将其物理删除（即 File.delete()）。
         Commit head = getHead();
         if (head.getBlobs().containsKey(fileName)) {
-            Stage sdd =  Stage.fromFile();
+            Stage sdd = Stage.fromFile();
             sdd.getRemoval().put(fileName, getHead().getBlobs().get(fileName));
             sdd.saveStage();
             thisremoveFile.delete();
@@ -175,6 +174,7 @@ public class Repository {
             currentCommit = Commit.fromFile(parentSha);
         }
     }
+
     public static void printGlobalLog() {
         List<String> allCommit = plainFilenamesIn(COMMITFOLDER);
         if (allCommit != null) {
@@ -215,7 +215,6 @@ public class Repository {
             }
         }
     }
-
 
 
     private static void saveBranchesMap() {
@@ -364,6 +363,7 @@ public class Repository {
         }
         message(message + "\n");
     }
+
     // 从当前分支的 head commit 中取出 fileName 并覆盖工作目录中该文件
     public static void checkoutFileFromHead(String filename) {
         Commit cm = getHead();
@@ -389,6 +389,7 @@ public class Repository {
         }
         return null;
     }
+
     //从指定的 commit 中取出该文件版本，覆盖当前工作目录中的对应文件。也不会添加到暂存区。
     public static void checkoutFileFromCommit(String commitSHA, String filename) {
         List<String> allCommit = plainFilenamesIn(COMMITFOLDER);
@@ -464,7 +465,6 @@ public class Repository {
         changeHead(newBranchCommit);
         Stage.clear();
     }
-
 
 
     public static void branch(String branchName) {
@@ -543,27 +543,148 @@ public class Repository {
         saveBranchesMap();
     }
 
-    public static void merge(String targetBranch) {
 
+    public static void merge(String targetBranch) {
+        currentBranchFromFile();
+        branchesMapFromFile();
+        boolean hasConflict = false;
+        if (!Stage.fromFile().getAddition().isEmpty()
+                && !Stage.fromFile().getRemoval().isEmpty()) {
+            message("You have uncommitted changes.");
+            System.exit(0);
+        }
+        if (!branches.containsKey(targetBranch)) {
+            message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+
+        if (currentBranch.equals(targetBranch)) {
+            message("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+        List<String> allFilesInCWD = plainFilenamesIn(CWD);
+        HashMap<String, String> targetBlobs = Commit.fromFile(branches.get(targetBranch)).getBlobs();
+        if (allFilesInCWD != null) {
+            for (String fileName : allFilesInCWD) {
+                if (getHead().getBlobs().containsKey(fileName) &&
+                        targetBlobs.containsKey(fileName)) {
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+        Commit targetCommit = Commit.fromFile(branches.get(targetBranch));
+        Commit splitPoint = getSplitPoint(targetBranch);
+
+         if (splitPoint.getSha().equals(branches.get(targetBranch))) {
+            message("Given branch is an ancestor of the current branch.");
+        } else if (splitPoint.getSha().equals(readContentsAsString(HEADFILE))) {
+            checkoutBranch(targetBranch);
+            message("Current branch fast-forwarded.");
+        }
+        HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
+        HashMap<String, String> currentBlobs = getHead().getBlobs();
+
+        HashSet<String> allFiles = new HashSet<>();
+        allFiles.addAll(splitPointBlobs.keySet());
+        allFiles.addAll(currentBlobs.keySet());
+        allFiles.addAll(targetBlobs.keySet());
+        for (String blobsName : allFiles) {
+            //自分割点以来，指定分支修改过但当前分支未修改的文件，应切换为指定分支版本（即检出指定分支最新提交中的文件），并自动将这些文件全部暂存。
+            //（“修改过”的含义是文件内容与分割点时版本不同，内容通过 blob 地址确定）
+            if (!Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))
+            && Objects.equals(currentBlobs.get(blobsName),splitPointBlobs.get(blobsName))) {
+                if (targetBlobs.containsKey(blobsName)) {
+                    checkoutFileFromCommit(targetCommit.getSha(), blobsName);
+                    stagedForAddition(blobsName);
+                } else {
+                    stagedForRemoval(blobsName);
+                }
+            } else if (!Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName)) &&
+                    Objects.equals(targetBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
+                // 当前分支改过，目标分支没改，保留当前分支版本，不做操作
+                continue;
+            } else if (Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))) {
+                continue;
+            } else {
+                // 发生冲突
+                hasConflict = true;
+                handleConflict(blobsName, currentBlobs, targetBlobs);
+                System.out.println("Encountered a merge conflict.");
+            }
+            if (!hasConflict) {//"Merged [given branch name] into [current branch name]."
+                commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
+            } else {
+                Commit head = getHead();
+                String message = "Merged " + targetBranch + " into " + currentBranch + ".";
+                Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(),branches.get(targetBranch));
+                newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
+                Stage sd = Stage.fromFile();
+                newCommit.addBlobs(sd.getAddition(), sd.getRemoval());
+                Stage stage = new Stage();
+                stage.saveStage();
+                changeHead(newCommit);
+                changeBranchCommitAndSave(newCommit);
+                newCommit.saveCommit();
+            }
+        }
     }
-    private List<String> commitList(String BranchName) {
+
+    private static void handleConflict(String fileName, Map<String, String> currentBlobs, Map<String, String> targetBlobs) {
+        String currentContent = "";
+        String targetContent = "";
+
+        if (currentBlobs.containsKey(fileName)) {
+            currentContent = readContentsAsString(join(BLOBSFOLDER,currentBlobs.get(fileName)));
+        }
+        if (targetBlobs.containsKey(fileName)) {
+            targetContent = readContentsAsString(join(BLOBSFOLDER,targetBlobs.get(fileName)));
+        }
+
+        String merged = "<<<<<<< HEAD\n" + currentContent +
+                "=======\n" + targetContent +
+                ">>>>>>>\n";
+
+        writeContents(join(CWD, fileName), merged);
+        stagedForAddition(fileName);
+    }
+
+
+    private static List<String> branchcommitList (String targetBranch){
         currentBranchFromFile();
         branchesMapFromFile();
 
-        Commit currentBranchHead = getHead();
-        Commit targetBranchHead = Commit.fromFile(branches.get(targetBranch));
 
         List<String> currentBranchCommits = new ArrayList<>();
         Commit currentCommitForHeadBranch = getHead();
 
         while (currentCommitForHeadBranch != null) {
-            currentBranchCommits.addFirst(currentCommitForHeadBranch.getSha());
+            currentBranchCommits.add(currentCommitForHeadBranch.getSha());
             String parentSha = currentCommitForHeadBranch.getParent();
             if (parentSha == null) {
                 break;
             }
             currentCommitForHeadBranch = Commit.fromFile(parentSha);
         }
+        return currentBranchCommits;
+    }
+
+    private static Commit getSplitPoint(String targetBranch) {
+        currentBranchFromFile();
+        branchesMapFromFile();
+        List<String> currentBranchCommitList = branchcommitList(targetBranch);
+        Commit currentBranchCommit = getHead();
+        while (currentBranchCommit != null) {
+            if (currentBranchCommitList.contains(currentBranchCommit.getSha())) {
+                return currentBranchCommit;
+            }
+            String parentSha = currentBranchCommit.getParent();
+            if (parentSha == null) {
+                break; //没找到分离点
+            }
+            currentBranchCommit = Commit.fromFile(parentSha);
+        }
+        return currentBranchCommit;
     }
 
 
