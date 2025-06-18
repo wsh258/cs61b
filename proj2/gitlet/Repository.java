@@ -554,8 +554,7 @@ public class Repository {
         currentBranchFromFile();
         branchesMapFromFile();
         boolean hasConflict = false;
-        if (!Stage.fromFile().getAddition().isEmpty()
-                || !Stage.fromFile().getRemoval().isEmpty()) {
+        if (!Stage.fromFile().getAddition().isEmpty() || !Stage.fromFile().getRemoval().isEmpty()) {
             message("You have uncommitted changes.");
             System.exit(0);
         }
@@ -608,8 +607,7 @@ public class Repository {
                 continue;
             } else if (Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))) {
                 continue;
-            } else if (splitPointBlobs.containsKey(blobsName)
-                    && !currentBlobs.containsKey(blobsName)
+            } else if (splitPointBlobs.containsKey(blobsName) && !currentBlobs.containsKey(blobsName)
                     && !targetBlobs.containsKey(blobsName)) {
                 stagedForRemoval(blobsName);
             } else {
@@ -625,10 +623,8 @@ public class Repository {
             String message = "Merged " + targetBranch + " into " + currentBranch + ".";
             Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
             newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
-            Stage sd = Stage.fromFile();
-            newCommit.addBlobs(sd.getAddition(), sd.getRemoval());
-            Stage stage = new Stage();
-            stage.saveStage();
+            newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
+            Stage.clear();
             changeHead(newCommit);
             changeBranchCommitAndSave(newCommit);
             newCommit.saveCommit();
@@ -664,7 +660,7 @@ public class Repository {
             String currentCommitSha = queue.poll();
             currentCommitForTargetBranch = Commit.fromFile(currentCommitSha);
 
-            if (currentCommitSha == null ) {
+            if (currentCommitSha == null) {
                 continue;
             }
             currentBranchCommits.add(currentCommitSha);
@@ -689,7 +685,7 @@ public class Repository {
         Queue<String> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
         queue.offer(getHead().getSha());
-        while (!queue.isEmpty()){
+        while (!queue.isEmpty()) {
             String currentCommitSha = queue.poll();
             Commit currentCommit = Commit.fromFile(currentCommitSha);
             if (currentCommitSha == null || visited.contains(currentCommitSha)) {
@@ -700,7 +696,7 @@ public class Repository {
             if (targetBranchCommitList.contains(currentCommitSha)) {
                 return currentCommit;
             }
-            String firstParent =currentCommit.getParent();
+            String firstParent = currentCommit.getParent();
             if (firstParent != null) {
                 queue.offer(firstParent);
             }
