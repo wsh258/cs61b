@@ -576,13 +576,13 @@ public class Repository {
         Commit targetCommit = Commit.fromFile(branches.get(targetBranch));
         Commit splitPoint = getSplitPoint(targetBranch);
 
-         if (splitPoint.getSha().equals(branches.get(targetBranch))) {
+        if (splitPoint.getSha().equals(branches.get(targetBranch))) {
             message("Given branch is an ancestor of the current branch.");
              System.exit(0);
-        } else if (splitPoint.getSha().equals(readContentsAsString(HEADFILE))) {
+        } else if (splitPoint.getSha().equals(getHead().getSha())) {
             checkoutBranch(targetBranch);
             message("Current branch fast-forwarded.");
-             System.exit(0);
+            System.exit(0);
         }
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
