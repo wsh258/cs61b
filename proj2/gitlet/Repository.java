@@ -579,7 +579,7 @@ public class Repository {
         if (splitPoint.getSha().equals(branches.get(targetBranch))) {
             message("Given branch is an ancestor of the current branch.");
              System.exit(0);
-        } else if (splitPoint.getSha().equals(getHead().getSha())) {
+        } else if (splitPoint.getSha().equals(getHead().getSha())) {//
             checkoutBranch(targetBranch);
             message("Current branch fast-forwarded.");
             System.exit(0);
@@ -655,10 +655,8 @@ public class Repository {
     private static List<String> branchcommitList (String targetBranch){
         currentBranchFromFile();
         branchesMapFromFile();
-
-
         List<String> currentBranchCommits = new ArrayList<>();
-        Commit currentCommitForHeadBranch = getHead();
+        Commit currentCommitForHeadBranch = Commit.fromFile(branches.get(targetBranch));
 
         while (currentCommitForHeadBranch != null) {
             currentBranchCommits.add(currentCommitForHeadBranch.getSha());
@@ -674,10 +672,10 @@ public class Repository {
     private static Commit getSplitPoint(String targetBranch) {
         currentBranchFromFile();
         branchesMapFromFile();
-        List<String> currentBranchCommitList = branchcommitList(targetBranch);
+        List<String> targetBranchCommitList = branchcommitList(targetBranch);
         Commit currentBranchCommit = getHead();
         while (currentBranchCommit != null) {
-            if (currentBranchCommitList.contains(currentBranchCommit.getSha())) {
+            if (targetBranchCommitList.contains(currentBranchCommit.getSha())) {
                 return currentBranchCommit;
             }
             String parentSha = currentBranchCommit.getParent();
