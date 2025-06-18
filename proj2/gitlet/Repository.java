@@ -681,67 +681,69 @@ public class Repository {
     }
 
 
-    private static Set<String> branchCommitSet(String targetBranch) {
-        currentBranchFromFile();
-        branchesMapFromFile();
-        Set<String> currentBranchCommits = new HashSet<>();
+    private static Set<String> getAllAncestors(String startSha) {
+        Set<String> result = new HashSet<>();
         Queue<String> queue = new LinkedList<>();
-        Commit currentCommitForTargetBranch = Commit.fromFile(branches.get(targetBranch));
-        queue.offer(currentCommitForTargetBranch.getSha());
+        queue.offer(startSha);
         while (!queue.isEmpty()) {
-            String currentCommitSha = queue.poll();
-            currentCommitForTargetBranch = Commit.fromFile(currentCommitSha);
-
-            if (currentCommitSha == null) {
+            String sha = queue.poll();
+            if (sha == null || result.contains(sha)) {
                 continue;
             }
-            currentBranchCommits.add(currentCommitSha);
-            String firstParent = currentCommitForTargetBranch.getParent();
-            if (firstParent != null && !currentBranchCommits.contains(firstParent)) {
-                queue.offer(firstParent);
+            result.add(sha);
+            Commit c = Commit.fromFile(sha);
+            if (c.getParent() != null) {
+                queue.offer(c.getParent());
             }
-            // 添加第二个父提交（如果存在）
-            String secondParent = currentCommitForTargetBranch.get2Parent();
-            if (secondParent != null && !currentBranchCommits.contains(secondParent)) {
-                queue.offer(secondParent);
+            if (c.get2Parent() != null) {
+                queue.offer(c.get2Parent());
             }
         }
-        return currentBranchCommits;
+        return result;
     }
 
+    /**
+     * 找到当前分支 HEAD 与 targetBranch 的最近公共祖先（split point）。
+     */
     private static Commit getSplitPoint(String targetBranch) {
+        // 读取分支映射
         currentBranchFromFile();
         branchesMapFromFile();
-        Set<String> targetBranchCommitList = branchCommitSet(targetBranch);
-        // 使用队列进行广度优先搜索，处理合并提交的多个父提交
+
+        // 获取两个分支所有祖先 SHA
+        String headSha = getHead().getSha();
+        String targetSha = branches.get(targetBranch);
+        Set<String> ancestorsA = getAllAncestors(headSha);
+        Set<String> ancestorsB = getAllAncestors(targetSha);
+
+        // 找出公共祖先
+        Set<String> common = new HashSet<>(ancestorsA);
+        common.retainAll(ancestorsB);
+
+        // BFS 从当前 HEAD 开始，找到第一个出现在公共祖先集合中的提交
         Queue<String> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
-        queue.offer(getHead().getSha());
+        queue.offer(headSha);
         while (!queue.isEmpty()) {
-            String currentCommitSha = queue.poll();
-            Commit currentCommit = Commit.fromFile(currentCommitSha);
-            if (currentCommitSha == null || visited.contains(currentCommitSha)) {
+            String sha = queue.poll();
+            if (sha == null || visited.contains(sha)) {
                 continue;
             }
-
-            if (targetBranchCommitList.contains(currentCommitSha)) {
-                return currentCommit;
+            if (common.contains(sha)) {
+                return Commit.fromFile(sha);
             }
-
-            visited.add(currentCommitSha);
-
-            String firstParent = currentCommit.getParent();
-            if (firstParent != null) {
-                queue.offer(firstParent);
+            visited.add(sha);
+            Commit c = Commit.fromFile(sha);
+            if (c.getParent() != null) {
+                queue.offer(c.getParent());
             }
-            // 添加第二个父提交（如果存在）
-            String secondParent = currentCommit.get2Parent();
-            if (secondParent != null) {
-                queue.offer(secondParent);
+            if (c.get2Parent() != null) {
+                queue.offer(c.get2Parent());
             }
         }
         return null;
     }
+
 
 
 
