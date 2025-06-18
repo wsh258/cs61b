@@ -79,20 +79,20 @@ public class Repository {
 
         Commit head = getHead();
         Stage stage = Stage.fromFile();
+
         // 如果当前文件内容与 HEAD 中版本相同，则不应添加到暂存区
         if (fileSha1.equals(head.getBlobs().get(fileName))) {
             // 如果之前已被暂存，则移除
             stage.getAddition().remove(fileName);
             stage.getRemoval().remove(fileName);  // 若之前标记为删除，也移除
             stage.saveStage();
-
+            return;
         }
         // 否则，写入 blob，并记录在 addition 中
         writeContents(blobFile, fileContent);
         stage.getAddition().put(fileName, fileSha1);
         stage.getRemoval().remove(fileName); // 若之前标记为删除，取消删除
         stage.saveStage();
-
     }
 
 
