@@ -322,7 +322,8 @@ public class Repository {
 
             if (file.exists()) {
                 String workingContent = readContentsAsString(file);
-                String trackedContent = readContentsAsString(join(BLOBSFOLDER, getHead().getBlobs().get(fileName)));
+                String trackedContent = readContentsAsString(join(BLOBSFOLDER,
+                        getHead().getBlobs().get(fileName)));
 
                 if (!workingContent.equals(trackedContent) && !isInStagedAdd) {
                     message.append("\n").append(fileName).append(" (modified)");
@@ -338,7 +339,8 @@ public class Repository {
                 message.append(fileName).append(" (deleted)");
             } else {
                 String workingContent = readContentsAsString(file);
-                String stagedContent = readContentsAsString(join(BLOBSFOLDER, sd.getAddition().get(fileName)));
+                String stagedContent = readContentsAsString(join(BLOBSFOLDER,
+                        sd.getAddition().get(fileName)));
                 if (!workingContent.equals(stagedContent)) {
                     message.append(fileName).append(" (modified)");
                 }
@@ -356,7 +358,8 @@ public class Repository {
 
         if (allFiles != null) {
             for (String fileName : allFiles) {
-                if (!getHead().getBlobs().containsKey(fileName) && !sd.getAddition().containsKey(fileName)) {
+                if (!getHead().getBlobs().containsKey(fileName)
+                        && !sd.getAddition().containsKey(fileName)) {
                     message.append("\n").append(fileName);
                 }
             }
@@ -438,7 +441,8 @@ public class Repository {
                 boolean isInStagedRemove = sd.getRemoval().containsKey(fileName);
                 boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
 
-                if (isUntracked && newBranchCommit.getBlobs().containsKey(fileName)) {
+                if (isUntracked
+                        && newBranchCommit.getBlobs().containsKey(fileName)) {
                     message("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
@@ -517,7 +521,8 @@ public class Repository {
                 boolean isUntracked = !isTrackedInHEAD && !isInStagedAdd && !isInStagedRemove;
 
                 if (isUntracked && targetCommit.getBlobs().containsKey(fileName)) {
-                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    message("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
@@ -557,7 +562,6 @@ public class Repository {
             message("A branch with that name does not exist.");
             System.exit(0);
         }
-
         if (currentBranch.equals(targetBranch)) {
             message("Cannot merge a branch with itself.");
             System.exit(0);
@@ -566,8 +570,8 @@ public class Repository {
         HashMap<String, String> targetBlobs = Commit.fromFile(branches.get(targetBranch)).getBlobs();
         if (allFilesInCWD != null) {
             for (String fileName : allFilesInCWD) {
-                if (!getHead().getBlobs().containsKey(fileName) &&
-                        targetBlobs.containsKey(fileName)) {
+                if (!getHead().getBlobs().containsKey(fileName)
+                        && targetBlobs.containsKey(fileName)) {
                     message("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
@@ -575,52 +579,46 @@ public class Repository {
         }
         Commit targetCommit = Commit.fromFile(branches.get(targetBranch));
         Commit splitPoint = getSplitPoint(targetBranch);
-
         if (splitPoint.getSha().equals(branches.get(targetBranch))) {
             message("Given branch is an ancestor of the current branch.");
-             System.exit(0);
-        } else if (splitPoint.getSha().equals(getHead().getSha())) {//
+            System.exit(0);
+        } else if (splitPoint.getSha().equals(getHead().getSha())) {
             checkoutBranch(targetBranch);
             message("Current branch fast-forwarded.");
             System.exit(0);
         }
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
-
         HashSet<String> allFiles = new HashSet<>();
         allFiles.addAll(splitPointBlobs.keySet());
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
         for (String blobsName : allFiles) {
-            //自分割点以来，指定分支修改过但当前分支未修改的文件，应切换为指定分支版本（即检出指定分支最新提交中的文件），并自动将这些文件全部暂存。
-            //（“修改过”的含义是文件内容与分割点时版本不同，内容通过 blob 地址确定）
             if (!Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))
-            && Objects.equals(currentBlobs.get(blobsName),splitPointBlobs.get(blobsName))) {
+                   && Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
                 if (targetBlobs.containsKey(blobsName)) {
                     checkoutFileFromCommit(targetCommit.getSha(), blobsName);
                     stagedForAddition(blobsName);
                 } else {
                     stagedForRemoval(blobsName);
                 }
-            } else if (!Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName)) &&
-                    Objects.equals(targetBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
-                // 当前分支改过，目标分支没改，保留当前分支版本，不做操作
+            } else if (!Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName))
+                    && Objects.equals(targetBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
                 continue;
             } else if (Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))) {
                 continue;
             } else {
-                // 发生冲突
                 hasConflict = true;
                 handleConflict(blobsName, currentBlobs, targetBlobs);
                 System.out.println("Encountered a merge conflict.");
             }
         }
-        if (!hasConflict) {//"Merged [given branch name] into [current branch name]."
+        if (!hasConflict) {
             commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
         } else {
             Commit head = getHead();
             String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(),branches.get(targetBranch));
+            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
             newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
             Stage sd = Stage.fromFile();
             newCommit.addBlobs(sd.getAddition(), sd.getRemoval());
@@ -632,39 +630,52 @@ public class Repository {
         }
     }
 
-    private static void handleConflict(String fileName, Map<String, String> currentBlobs, Map<String, String> targetBlobs) {
+    private static void handleConflict(String fileName, Map<String, String> currentBlobs,
+                                       Map<String, String> targetBlobs) {
         String currentContent = "";
         String targetContent = "";
 
         if (currentBlobs.containsKey(fileName)) {
-            currentContent = readContentsAsString(join(BLOBSFOLDER,currentBlobs.get(fileName)));
+            currentContent = readContentsAsString(join(BLOBSFOLDER, currentBlobs.get(fileName)));
         }
         if (targetBlobs.containsKey(fileName)) {
-            targetContent = readContentsAsString(join(BLOBSFOLDER,targetBlobs.get(fileName)));
+            targetContent = readContentsAsString(join(BLOBSFOLDER, targetBlobs.get(fileName)));
         }
 
-        String merged = "<<<<<<< HEAD\n" + currentContent +
-                "=======\n" + targetContent +
-                ">>>>>>>\n";
-
+        String merged = "<<<<<<< HEAD\n" + currentContent
+                + "=======\n" + targetContent + ">>>>>>>\n";
         writeContents(join(CWD, fileName), merged);
         stagedForAddition(fileName);
     }
 
 
-    private static List<String> branchcommitList (String targetBranch){
+    private static Set<String> branchCommitSet(String targetBranch) {
         currentBranchFromFile();
         branchesMapFromFile();
-        List<String> currentBranchCommits = new ArrayList<>();
-        Commit currentCommitForHeadBranch = Commit.fromFile(branches.get(targetBranch));
+        Set<String> currentBranchCommits = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
 
-        while (currentCommitForHeadBranch != null) {
-            currentBranchCommits.add(currentCommitForHeadBranch.getSha());
-            String parentSha = currentCommitForHeadBranch.getParent();
-            if (parentSha == null) {
-                break;
+        Commit currentCommitForHeadBranch = Commit.fromFile(branches.get(targetBranch));
+        queue.offer(currentCommitForHeadBranch.getSha());
+
+        while (!queue.isEmpty()) {
+            String currentCommitSha = queue.poll();
+            if (currentCommitSha == null ) {
+                continue;
             }
-            currentCommitForHeadBranch = Commit.fromFile(parentSha);
+
+            Commit currentCommit = Commit.fromFile(currentCommitSha);
+
+            currentBranchCommits.add(currentCommitSha);
+            String firstParent =currentCommit.getParent();
+            if (firstParent != null && !currentBranchCommits.contains(firstParent)) {
+                queue.offer(firstParent);
+            }
+            // 添加第二个父提交（如果存在）
+            String secondParent = currentCommit.get2Parent();
+            if (secondParent != null && !currentBranchCommits.contains(secondParent)) {
+                queue.offer(secondParent);
+            }
         }
         return currentBranchCommits;
     }
@@ -672,19 +683,39 @@ public class Repository {
     private static Commit getSplitPoint(String targetBranch) {
         currentBranchFromFile();
         branchesMapFromFile();
-        List<String> targetBranchCommitList = branchcommitList(targetBranch);
-        Commit currentBranchCommit = getHead();
-        while (currentBranchCommit != null) {
-            if (targetBranchCommitList.contains(currentBranchCommit.getSha())) {
-                return currentBranchCommit;
+        Set<String> targetBranchCommitList = branchCommitSet(targetBranch);
+
+        // 使用队列进行广度优先搜索，处理合并提交的多个父提交
+        Queue<String> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+
+        queue.offer(getHead().getSha());
+
+        while (!queue.isEmpty()){
+            String currentCommitSha = queue.poll();
+            Commit currentCommit = Commit.fromFile(currentCommitSha);
+            if (currentCommitSha == null || visited.contains(currentCommitSha)) {
+                continue;
             }
-            String parentSha = currentBranchCommit.getParent();
-            if (parentSha == null) {
-                break; //没找到分离点
+            visited.add(currentCommitSha);
+
+            if (targetBranchCommitList.contains(currentCommitSha)) {
+                return currentCommit;
             }
-            currentBranchCommit = Commit.fromFile(parentSha);
+
+            String firstParent =currentCommit.getParent();
+            if (firstParent != null) {
+                queue.offer(firstParent);
+            }
+
+            // 添加第二个父提交（如果存在）
+            String secondParent = currentCommit.get2Parent();
+            if (secondParent != null) {
+                queue.offer(secondParent);
+            }
         }
-        return currentBranchCommit;
+
+        return null;
     }
 
 
