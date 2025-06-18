@@ -549,7 +549,7 @@ public class Repository {
         branchesMapFromFile();
         boolean hasConflict = false;
         if (!Stage.fromFile().getAddition().isEmpty()
-                && !Stage.fromFile().getRemoval().isEmpty()) {
+                || !Stage.fromFile().getRemoval().isEmpty()) {
             message("You have uncommitted changes.");
             System.exit(0);
         }
@@ -566,7 +566,7 @@ public class Repository {
         HashMap<String, String> targetBlobs = Commit.fromFile(branches.get(targetBranch)).getBlobs();
         if (allFilesInCWD != null) {
             for (String fileName : allFilesInCWD) {
-                if (getHead().getBlobs().containsKey(fileName) &&
+                if (!getHead().getBlobs().containsKey(fileName) &&
                         targetBlobs.containsKey(fileName)) {
                     message("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
@@ -578,9 +578,11 @@ public class Repository {
 
          if (splitPoint.getSha().equals(branches.get(targetBranch))) {
             message("Given branch is an ancestor of the current branch.");
+             System.exit(0);
         } else if (splitPoint.getSha().equals(readContentsAsString(HEADFILE))) {
             checkoutBranch(targetBranch);
             message("Current branch fast-forwarded.");
+             System.exit(0);
         }
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
@@ -612,21 +614,21 @@ public class Repository {
                 handleConflict(blobsName, currentBlobs, targetBlobs);
                 System.out.println("Encountered a merge conflict.");
             }
-            if (!hasConflict) {//"Merged [given branch name] into [current branch name]."
-                commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
-            } else {
-                Commit head = getHead();
-                String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-                Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(),branches.get(targetBranch));
-                newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
-                Stage sd = Stage.fromFile();
-                newCommit.addBlobs(sd.getAddition(), sd.getRemoval());
-                Stage stage = new Stage();
-                stage.saveStage();
-                changeHead(newCommit);
-                changeBranchCommitAndSave(newCommit);
-                newCommit.saveCommit();
-            }
+        }
+        if (!hasConflict) {//"Merged [given branch name] into [current branch name]."
+            commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
+        } else {
+            Commit head = getHead();
+            String message = "Merged " + targetBranch + " into " + currentBranch + ".";
+            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(),branches.get(targetBranch));
+            newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
+            Stage sd = Stage.fromFile();
+            newCommit.addBlobs(sd.getAddition(), sd.getRemoval());
+            Stage stage = new Stage();
+            stage.saveStage();
+            changeHead(newCommit);
+            changeBranchCommitAndSave(newCommit);
+            newCommit.saveCommit();
         }
     }
 
