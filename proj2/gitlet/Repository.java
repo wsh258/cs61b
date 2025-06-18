@@ -595,12 +595,6 @@ public class Repository {
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
         for (String blobsName : allFiles) {
-            // 如果这个文件在 split、当前分支、目标分支中都不存在，就跳过处理
-            if (!splitPointBlobs.containsKey(blobsName)
-                    && !currentBlobs.containsKey(blobsName)
-                    && !targetBlobs.containsKey(blobsName)) {
-                continue;
-            }
             if (!Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))
                    && Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
                 if (targetBlobs.containsKey(blobsName)) {
@@ -614,6 +608,10 @@ public class Repository {
                 continue;
             } else if (Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))) {
                 continue;
+            } else if (splitPointBlobs.containsKey(blobsName)
+                    && !currentBlobs.containsKey(blobsName)
+                    && !targetBlobs.containsKey(blobsName)) {
+                stagedForRemoval(blobsName);
             } else {
                 hasConflict = true;
                 handleConflict(blobsName, currentBlobs, targetBlobs);
@@ -648,7 +646,6 @@ public class Repository {
         if (targetBlobs.containsKey(fileName)) {
             targetContent = readContentsAsString(join(BLOBSFOLDER, targetBlobs.get(fileName)));
         }
-
         String merged = "<<<<<<< HEAD\n" + currentContent
                 + "=======\n" + targetContent + ">>>>>>>\n";
         writeContents(join(CWD, fileName), merged);
@@ -661,25 +658,22 @@ public class Repository {
         branchesMapFromFile();
         Set<String> currentBranchCommits = new HashSet<>();
         Queue<String> queue = new LinkedList<>();
-
-        Commit currentCommitForHeadBranch = Commit.fromFile(branches.get(targetBranch));
-        queue.offer(currentCommitForHeadBranch.getSha());
-
+        Commit currentCommitForTargetBranch = Commit.fromFile(branches.get(targetBranch));
+        queue.offer(currentCommitForTargetBranch.getSha());
         while (!queue.isEmpty()) {
             String currentCommitSha = queue.poll();
+            currentCommitForTargetBranch = Commit.fromFile(currentCommitSha);
+
             if (currentCommitSha == null ) {
                 continue;
             }
-
-            Commit currentCommit = Commit.fromFile(currentCommitSha);
-
             currentBranchCommits.add(currentCommitSha);
-            String firstParent =currentCommit.getParent();
+            String firstParent = currentCommitForTargetBranch.getParent();
             if (firstParent != null && !currentBranchCommits.contains(firstParent)) {
                 queue.offer(firstParent);
             }
             // 添加第二个父提交（如果存在）
-            String secondParent = currentCommit.get2Parent();
+            String secondParent = currentCommitForTargetBranch.get2Parent();
             if (secondParent != null && !currentBranchCommits.contains(secondParent)) {
                 queue.offer(secondParent);
             }
@@ -691,13 +685,10 @@ public class Repository {
         currentBranchFromFile();
         branchesMapFromFile();
         Set<String> targetBranchCommitList = branchCommitSet(targetBranch);
-
         // 使用队列进行广度优先搜索，处理合并提交的多个父提交
         Queue<String> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
-
         queue.offer(getHead().getSha());
-
         while (!queue.isEmpty()){
             String currentCommitSha = queue.poll();
             Commit currentCommit = Commit.fromFile(currentCommitSha);
@@ -709,19 +700,16 @@ public class Repository {
             if (targetBranchCommitList.contains(currentCommitSha)) {
                 return currentCommit;
             }
-
             String firstParent =currentCommit.getParent();
             if (firstParent != null) {
                 queue.offer(firstParent);
             }
-
             // 添加第二个父提交（如果存在）
             String secondParent = currentCommit.get2Parent();
             if (secondParent != null) {
                 queue.offer(secondParent);
             }
         }
-
         return null;
     }
 
