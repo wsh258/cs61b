@@ -513,6 +513,7 @@ public class Repository {
         List<String> allFilesInCWD = plainFilenamesIn(CWD);
         Commit commitBeforeChange = getHead();
 
+
         if (allFilesInCWD != null) {
             for (String fileName : allFilesInCWD) {
                 boolean isTrackedInHEAD = commitBeforeChange.getBlobs().containsKey(fileName);
@@ -594,6 +595,12 @@ public class Repository {
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
         for (String blobsName : allFiles) {
+            // 如果这个文件在 split、当前分支、目标分支中都不存在，就跳过处理
+            if (!splitPointBlobs.containsKey(blobsName)
+                    && !currentBlobs.containsKey(blobsName)
+                    && !targetBlobs.containsKey(blobsName)) {
+                continue;
+            }
             if (!Objects.equals(targetBlobs.get(blobsName), currentBlobs.get(blobsName))
                    && Objects.equals(currentBlobs.get(blobsName), splitPointBlobs.get(blobsName))) {
                 if (targetBlobs.containsKey(blobsName)) {
