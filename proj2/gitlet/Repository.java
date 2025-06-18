@@ -626,7 +626,13 @@ public class Repository {
             // Case 1: current 没变，target 改了 -> 使用 target 内容
             if (!Objects.equals(targetBlob, currentBlob)
                     && Objects.equals(currentBlob, splitBlob)) {
-                if (targetBlob != null) {
+
+                // 如果 current 已删除，但 split 有，而 target 恢复了 -> 冲突！
+                if (currentBlob == null && splitBlob != null && targetBlob != null) {
+                    hasConflict = true;
+                    handleConflict(blobsName, currentBlobs, targetBlobs);
+                    System.out.println("Encountered a merge conflict.");
+                } else if (targetBlob != null) {
                     checkoutFileFromCommit(targetCommit.getSha(), blobsName);
                     stagedForAddition(blobsName);
                 } else {
