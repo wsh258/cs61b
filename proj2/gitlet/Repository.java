@@ -549,6 +549,7 @@ public class Repository {
         saveBranchesMap();
     }
 
+
     public static void merge(String targetBranch) {
         currentBranchFromFile();
         branchesMapFromFile();
@@ -588,20 +589,25 @@ public class Repository {
         }
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
+        HashSet<String> allFiles = new HashSet<>();
+        allFiles.addAll(splitPointBlobs.keySet());
+        allFiles.addAll(currentBlobs.keySet());
+        allFiles.addAll(targetBlobs.keySet());
         hasConflict = processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
-
-        // 无论是否有冲突，都创建带两个父节点的合并提交
-        Commit head = getHead();
-        String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-        Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
-        newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
-        newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
-        Stage.clear();
-        changeHead(newCommit);
-        changeBranchCommitAndSave(newCommit);
-        newCommit.saveCommit();
+        if (!hasConflict) {
+            commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
+        } else {
+            Commit head = getHead();
+            String message = "Merged " + targetBranch + " into " + currentBranch + ".";
+            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
+            newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
+            newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
+            Stage.clear();
+            changeHead(newCommit);
+            changeBranchCommitAndSave(newCommit);
+            newCommit.saveCommit();
+        }
     }
-
     private static boolean processMergeFiles(Commit splitPoint, Commit targetCommit,
                                              HashMap<String, String> splitPointBlobs,
                                              HashMap<String, String> currentBlobs,
@@ -612,56 +618,50 @@ public class Repository {
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
 
-        for (String fileName : allFiles) {
-            String splitBlob = splitPointBlobs.get(fileName);
-            String currentBlob = currentBlobs.get(fileName);
-            String targetBlob = targetBlobs.get(fileName);
+        for (String blobsName : allFiles) {
+            String splitBlob = splitPointBlobs.get(blobsName);
+            String currentBlob = currentBlobs.get(blobsName);
+            String targetBlob = targetBlobs.get(blobsName);
 
-            boolean isModifiedInCurrent = !Objects.equals(currentBlob, splitBlob);
-            boolean isModifiedInTarget = !Objects.equals(targetBlob, splitBlob);
+            // Case 1: current 没变，target 改了 -> 使用 target 内容
+            if (!Objects.equals(targetBlob, currentBlob)
+                    && Objects.equals(currentBlob, splitBlob)) {
 
-            if (isModifiedInCurrent && isModifiedInTarget) {
-                // Case 1: 两边都修改了
-                if (Objects.equals(currentBlob, targetBlob)) {
-                    // 1a: 两边修改成相同的内容，什么都不用做。
-                    continue;
-                } else {
-                    // 1b: 两边修改成不同的内容，发生冲突。
+                // 如果 current 已删除，但 split 有，而 target 恢复了 -> 冲突！
+                if (currentBlob == null && splitBlob != null && targetBlob != null) {
                     hasConflict = true;
-                    handleConflict(fileName, currentBlobs, targetBlobs);
-                }
-            } else if (isModifiedInCurrent) {
-                // Case 2: 只有当前分支修改了
-                // 结果应该采纳当前分支的修改。
-                // 工作目录中的文件已经是当前分支的版本，所以我们只需要处理"删除"的情况。
-                if (currentBlob == null) {
-                    // 2a: 当前分支删除了文件，将此删除操作暂存。
-                    stageFileForRemovalDuringMerge(fileName,currentBlobs,splitPointBlobs);
-                }
-                // 2b: 如果只是修改内容，文件已在工作目录，无需操作。
-            } else if (isModifiedInTarget) {
-                // Case 3: 只有目标分支修改了
-                if (targetBlob != null) {
-                    // 3a: 目标分支添加或修改了文件，检出目标版本并暂存。
-                    checkoutFileFromCommit(targetCommit.getSha(), fileName);
-                    stagedForAddition(fileName);
+                    handleConflict(blobsName, currentBlobs, targetBlobs);
+                    System.out.println("Encountered a merge conflict.");
+                } else if (targetBlob != null) {
+                    checkoutFileFromCommit(targetCommit.getSha(), blobsName);
+                    stagedForAddition(blobsName);
                 } else {
-                    // 3b: 目标分支删除了文件，将此删除操作暂存。
-                    File f = join(CWD,fileName);
-                    f.delete();
-                    stageFileForRemovalDuringMerge(fileName,currentBlobs,splitPointBlobs);
+                    stagedForRemoval(blobsName);
                 }
+
+                // Case 2: target 没变，current 改了 -> 忽略
+            } else if (!Objects.equals(currentBlob, splitBlob)
+                    && Objects.equals(targetBlob, splitBlob)) {
+                continue;
+
+                // Case 3: target 和 current 都未改 -> 忽略
+            } else if (Objects.equals(targetBlob, currentBlob)) {
+                continue;
+
+                // Case 4: split 有，current 和 target 都删了 -> 移除文件
+            } else if (splitBlob != null && currentBlob == null && targetBlob == null) {
+                stagedForRemoval(blobsName);
+
+                // Case 5: 有冲突 -> 生成冲突内容
+            } else {
+                hasConflict = true;
+                handleConflict(blobsName, currentBlobs, targetBlobs);
+                System.out.println("Encountered a merge conflict.");
             }
-            // Case 4: 两边都没修改，什么都不用做。
         }
-
-        // 只在最后打印一次冲突信息
-        if (hasConflict) {
-            System.out.println("Encountered a merge conflict.");
-        }
-
         return hasConflict;
     }
+
 
     private static void handleConflict(String fileName, Map<String, String> currentBlobs,
                                        Map<String, String> targetBlobs) {
@@ -679,6 +679,7 @@ public class Repository {
         writeContents(join(CWD, fileName), merged);
         stagedForAddition(fileName);
     }
+
 
     private static Set<String> getAllAncestors(String startSha) {
         Set<String> result = new HashSet<>();
@@ -699,7 +700,6 @@ public class Repository {
             }
         }
         return result;
-
     }
 
     /**
@@ -753,42 +753,11 @@ public class Repository {
 
         // 清空缓存，为下次调用做准备（或者你可以让它一直存在，作为全局缓存）
         // depthCache.clear();
-        message(Commit.fromFile(lcaSha).getMessage());
+
         return Commit.fromFile(lcaSha);
     }
 
 
-    /**
-     * 在合并过程中，将一个文件暂存为待删除状态。
-     * 这个方法只操作暂存区，不操作工作目录。
-     * 它会尝试从 current commit 或 split point commit 中找到文件的 blob SHA。
-     *
-     * @param fileName 要暂存删除的文件名
-     * @param currentBlobs 当前分支头提交的 blobs map
-     * @param splitPointBlobs 分割点提交的 blobs map
-     */
-    private static void stageFileForRemovalDuringMerge(String fileName,
-                                                       Map<String, String> currentBlobs,
-                                                       Map<String, String> splitPointBlobs) {
-        Stage stage = Stage.fromFile();
 
-        // 如果该文件在暂存区中被标记为待添加，先将其移除
-        stage.getAddition().remove(fileName);
 
-        // 找到该文件在被删除前的 blob SHA
-        // 优先从当前提交中找，因为它更“新”
-        String blobSha = currentBlobs.get(fileName);
-        if (blobSha == null) {
-            // 如果当前提交没有，那它一定在分割点中（否则合并逻辑不会走到这里）
-            blobSha = splitPointBlobs.get(fileName);
-        }
-
-        // 如果 blobSha 仍然是 null，说明合并逻辑有错误，这是一个不应该发生的情况。
-        // 但为了程序的健壮性，我们可以加一个检查。
-        if (blobSha != null) {
-            // 将 <文件名, blob SHA> 放入待删除暂存区
-            stage.getRemoval().put(fileName, blobSha);
-            stage.saveStage();
-        }
-    }
 }
