@@ -639,7 +639,7 @@ public class Repository {
                 // 工作目录中的文件已经是当前分支的版本，所以我们只需要处理“删除”的情况。
                 if (currentBlob == null) {
                     // 2a: 当前分支删除了文件，将此删除操作暂存。
-                    stageFileForRemovalDuringMerge(fileName);
+                    stageFileForRemovalDuringMerge(fileName,currentBlobs,splitPointBlobs);
                 }
                 // 2b: 如果只是修改内容，文件已在工作目录，无需操作。
             } else if (isModifiedInTarget) {
@@ -652,7 +652,7 @@ public class Repository {
                     // 3b: 目标分支删除了文件，将此删除操作暂存。
                     File f = join(CWD,fileName);
                     f.delete();
-                    stageFileForRemovalDuringMerge(fileName);
+                    stageFileForRemovalDuringMerge(fileName,currentBlobs,splitPointBlobs);
                 }
             }
             // Case 4: 两边都没修改，什么都不用做。
@@ -756,27 +756,38 @@ public class Repository {
     }
 
 
-    private static void stageFileForRemovalDuringMerge(String fileName) {
-        Stage sd = Stage.fromFile();
+    /**
+     * 在合并过程中，将一个文件暂存为待删除状态。
+     * 这个方法只操作暂存区，不操作工作目录。
+     * 它会尝试从 current commit 或 split point commit 中找到文件的 blob SHA。
+     *
+     * @param fileName 要暂存删除的文件名
+     * @param currentBlobs 当前分支头提交的 blobs map
+     * @param splitPointBlobs 分割点提交的 blobs map
+     */
+    private static void stageFileForRemovalDuringMerge(String fileName,
+                                                       Map<String, String> currentBlobs,
+                                                       Map<String, String> splitPointBlobs) {
+        Stage stage = Stage.fromFile();
 
-        // 如果这个文件之前被merge逻辑暂存添加了，现在又决定要删除，那就把它从addition里拿掉
-        sd.getAddition().remove(fileName);
+        // 如果该文件在暂存区中被标记为待添加，先将其移除
+        stage.getAddition().remove(fileName);
 
-        // 只需要把它加入removal列表。我们相信调用它的merge逻辑已经处理好了工作目录。
-        // 注意：这里我们可能不知道原始的blob SHA，但通常我们可以从split point或current commit获取
-        // 但为了简单，我们可以先不存SHA，或者存一个特殊标记。
-        // 或者，更好的方法是，只有当它在current或split里存在时，我们才有它的SHA。
-        Commit head = getHead();
-        if (head.getBlobs().containsKey(fileName)) {
-            sd.getRemoval().put(fileName, head.getBlobs().get(fileName));
-        } else {
-            // 如果head里没有，可能在split point里有
-            // 但对于merge来说，这个操作本身就意味着它被跟踪过，所以总能找到它的blob
-            // 这里的逻辑可以简化为，我们信任调用者
+        // 找到该文件在被删除前的 blob SHA
+        // 优先从当前提交中找，因为它更“新”
+        String blobSha = currentBlobs.get(fileName);
+        if (blobSha == null) {
+            // 如果当前提交没有，那它一定在分割点中（否则合并逻辑不会走到这里）
+            blobSha = splitPointBlobs.get(fileName);
         }
-        sd.getRemoval().put(fileName, "dummy_value_or_find_real_one"); // 关键是key在就行
 
-        sd.saveStage();
+        // 如果 blobSha 仍然是 null，说明合并逻辑有错误，这是一个不应该发生的情况。
+        // 但为了程序的健壮性，我们可以加一个检查。
+        if (blobSha != null) {
+            // 将 <文件名, blob SHA> 放入待删除暂存区
+            stage.getRemoval().put(fileName, blobSha);
+            stage.saveStage();
+        }
     }
 
 }
