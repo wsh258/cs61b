@@ -650,6 +650,8 @@ public class Repository {
                     stagedForAddition(fileName);
                 } else {
                     // 3b: 目标分支删除了文件，将此删除操作暂存。
+                    File f = join(CWD,fileName);
+                    f.delete();
                     stageFileForRemovalDuringMerge(fileName);
                 }
             }
