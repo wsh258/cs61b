@@ -549,7 +549,6 @@ public class Repository {
         saveBranchesMap();
     }
 
-
     public static void merge(String targetBranch) {
         currentBranchFromFile();
         branchesMapFromFile();
@@ -590,29 +589,19 @@ public class Repository {
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
         hasConflict = processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
-        if (!hasConflict) {
-            Commit head = getHead(); // 当前的父节点1
-            String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
-            newCommit.addBlobs(head.getBlobs(), null);
-            newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
-            Stage.clear();
-            changeHead(newCommit);
-            changeBranchCommitAndSave(newCommit);
-            newCommit.saveCommit();
 
-        } else {
-            Commit head = getHead();
-            String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
-            newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
-            newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
-            Stage.clear();
-            changeHead(newCommit);
-            changeBranchCommitAndSave(newCommit);
-            newCommit.saveCommit();
-        }
+        // 无论是否有冲突，都创建带两个父节点的合并提交
+        Commit head = getHead();
+        String message = "Merged " + targetBranch + " into " + currentBranch + ".";
+        Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
+        newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
+        newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
+        Stage.clear();
+        changeHead(newCommit);
+        changeBranchCommitAndSave(newCommit);
+        newCommit.saveCommit();
     }
+
     private static boolean processMergeFiles(Commit splitPoint, Commit targetCommit,
                                              HashMap<String, String> splitPointBlobs,
                                              HashMap<String, String> currentBlobs,
@@ -640,12 +629,11 @@ public class Repository {
                     // 1b: 两边修改成不同的内容，发生冲突。
                     hasConflict = true;
                     handleConflict(fileName, currentBlobs, targetBlobs);
-                    System.out.println("Encountered a merge conflict.");
                 }
             } else if (isModifiedInCurrent) {
                 // Case 2: 只有当前分支修改了
                 // 结果应该采纳当前分支的修改。
-                // 工作目录中的文件已经是当前分支的版本，所以我们只需要处理“删除”的情况。
+                // 工作目录中的文件已经是当前分支的版本，所以我们只需要处理"删除"的情况。
                 if (currentBlob == null) {
                     // 2a: 当前分支删除了文件，将此删除操作暂存。
                     stageFileForRemovalDuringMerge(fileName,currentBlobs,splitPointBlobs);
@@ -666,9 +654,14 @@ public class Repository {
             }
             // Case 4: 两边都没修改，什么都不用做。
         }
+
+        // 只在最后打印一次冲突信息
+        if (hasConflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
+
         return hasConflict;
     }
-
 
     private static void handleConflict(String fileName, Map<String, String> currentBlobs,
                                        Map<String, String> targetBlobs) {
@@ -686,7 +679,6 @@ public class Repository {
         writeContents(join(CWD, fileName), merged);
         stagedForAddition(fileName);
     }
-
 
     private static Set<String> getAllAncestors(String startSha) {
         Set<String> result = new HashSet<>();
