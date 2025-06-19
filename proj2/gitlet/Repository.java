@@ -791,8 +791,4 @@ public class Repository {
             stage.saveStage();
         }
     }
-
-    // 在你的 Gitlet 类里增加一个辅助函数
-
-
 }
