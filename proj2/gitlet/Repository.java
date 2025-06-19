@@ -705,8 +705,28 @@ public class Repository {
     /**
      * 找到当前分支 HEAD 与 targetBranch 的最近公共祖先（split point）。
      */
+    private static int getAbsoluteDepth(String commitSha, Map<String, Integer> cache) {
+        if (commitSha == null) {
+            return -1;
+        }
+        if (cache.containsKey(commitSha)) {
+            return cache.get(commitSha);
+        }
+
+        Commit commit = Commit.fromFile(commitSha);
+        // 递归调用时，必须把cache传下去
+        int depth1 = getAbsoluteDepth(commit.getParent(), cache);
+        int depth2 = getAbsoluteDepth(commit.get2Parent(), cache);
+
+        int currentDepth = 1 + Math.max(depth1, depth2);
+        cache.put(commitSha, currentDepth);
+        return currentDepth;
+    }
+
+
+    // 在你的getSplitPoint方法里使用它：
     private static Commit getSplitPoint(String targetBranch) {
-        // 读取分支映射
+        // 1. 找到所有共同祖先
         currentBranchFromFile();
         branchesMapFromFile();
 
@@ -715,33 +735,26 @@ public class Repository {
         String targetSha = branches.get(targetBranch);
         Set<String> ancestorsA = getAllAncestors(headSha);
         Set<String> ancestorsB = getAllAncestors(targetSha);
+        Set<String> commonAncestors = new HashSet<>(ancestorsA);
+        commonAncestors.retainAll(ancestorsB);
 
-        // 找出公共祖先
-        Set<String> common = new HashSet<>(ancestorsA);
-        common.retainAll(ancestorsB);
+        // 2. 遍历共同祖先，找到绝对深度最大的那个
+        int maxDepth = -1;
+        String lcaSha = null;
+        Map<String, Integer> depthCache = new HashMap<>();
 
-        // BFS 从当前 HEAD 开始，找到第一个出现在公共祖先集合中的提交
-        Queue<String> queue = new LinkedList<>();
-        Set<String> visited = new HashSet<>();
-        queue.offer(headSha);
-        while (!queue.isEmpty()) {
-            String sha = queue.poll();
-            if (sha == null || visited.contains(sha)) {
-                continue;
-            }
-            if (common.contains(sha)) {
-                return Commit.fromFile(sha);
-            }
-            visited.add(sha);
-            Commit c = Commit.fromFile(sha);
-            if (c.getParent() != null) {
-                queue.offer(c.getParent());
-            }
-            if (c.get2Parent() != null) {
-                queue.offer(c.get2Parent());
+        for (String sha : commonAncestors) {
+            int depth = getAbsoluteDepth(sha,depthCache);
+            if (depth > maxDepth) {
+                maxDepth = depth;
+                lcaSha = sha;
             }
         }
-        return null;
+
+        // 清空缓存，为下次调用做准备（或者你可以让它一直存在，作为全局缓存）
+        // depthCache.clear();
+
+        return Commit.fromFile(lcaSha);
     }
 
 
