@@ -591,7 +591,16 @@ public class Repository {
         HashMap<String, String> currentBlobs = getHead().getBlobs();
         hasConflict = processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
         if (!hasConflict) {
-            commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
+            Commit head = getHead(); // 当前的父节点1
+            String message = "Merged " + targetBranch + " into " + currentBranch + ".";
+            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
+            newCommit.addBlobs(head.getBlobs(), null);
+            newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
+            Stage.clear();
+            changeHead(newCommit);
+            changeBranchCommitAndSave(newCommit);
+            newCommit.saveCommit();
+
         } else {
             Commit head = getHead();
             String message = "Merged " + targetBranch + " into " + currentBranch + ".";
@@ -751,7 +760,7 @@ public class Repository {
 
         // 清空缓存，为下次调用做准备（或者你可以让它一直存在，作为全局缓存）
         // depthCache.clear();
-
+        message(Commit.fromFile(lcaSha).getMessage());
         return Commit.fromFile(lcaSha);
     }
 
@@ -789,5 +798,8 @@ public class Repository {
             stage.saveStage();
         }
     }
+
+    // 在你的 Gitlet 类里增加一个辅助函数
+
 
 }
