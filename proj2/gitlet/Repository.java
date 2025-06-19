@@ -618,46 +618,46 @@ public class Repository {
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
 
-        for (String blobsName : allFiles) {
-            String splitBlob = splitPointBlobs.get(blobsName);
-            String currentBlob = currentBlobs.get(blobsName);
-            String targetBlob = targetBlobs.get(blobsName);
+        for (String fileName : allFiles) {
+            String splitBlob = splitPointBlobs.get(fileName);
+            String currentBlob = currentBlobs.get(fileName);
+            String targetBlob = targetBlobs.get(fileName);
 
-            // Case 1: current 没变，target 改了 -> 使用 target 内容
-            if (!Objects.equals(targetBlob, currentBlob)
-                    && Objects.equals(currentBlob, splitBlob)) {
+            boolean isModifiedInCurrent = !Objects.equals(currentBlob, splitBlob);
+            boolean isModifiedInTarget = !Objects.equals(targetBlob, splitBlob);
 
-                // 如果 current 已删除，但 split 有，而 target 恢复了 -> 冲突！
-                if (currentBlob == null && splitBlob != null && targetBlob != null) {
-                    hasConflict = true;
-                    handleConflict(blobsName, currentBlobs, targetBlobs);
-                    System.out.println("Encountered a merge conflict.");
-                } else if (targetBlob != null) {
-                    checkoutFileFromCommit(targetCommit.getSha(), blobsName);
-                    stagedForAddition(blobsName);
+            if (isModifiedInCurrent && isModifiedInTarget) {
+                // Case 1: 两边都修改了
+                if (Objects.equals(currentBlob, targetBlob)) {
+                    // 1a: 两边修改成相同的内容，什么都不用做。
+                    continue;
                 } else {
-                    stagedForRemoval(blobsName);
+                    // 1b: 两边修改成不同的内容，发生冲突。
+                    hasConflict = true;
+                    handleConflict(fileName, currentBlobs, targetBlobs);
+                    System.out.println("Encountered a merge conflict.");
                 }
-
-                // Case 2: target 没变，current 改了 -> 忽略
-            } else if (!Objects.equals(currentBlob, splitBlob)
-                    && Objects.equals(targetBlob, splitBlob)) {
-                continue;
-
-                // Case 3: target 和 current 都未改 -> 忽略
-            } else if (Objects.equals(targetBlob, currentBlob)) {
-                continue;
-
-                // Case 4: split 有，current 和 target 都删了 -> 移除文件
-            } else if (splitBlob != null && currentBlob == null && targetBlob == null) {
-                stagedForRemoval(blobsName);
-
-                // Case 5: 有冲突 -> 生成冲突内容
-            } else {
-                hasConflict = true;
-                handleConflict(blobsName, currentBlobs, targetBlobs);
-                System.out.println("Encountered a merge conflict.");
+            } else if (isModifiedInCurrent) {
+                // Case 2: 只有当前分支修改了
+                // 结果应该采纳当前分支的修改。
+                // 工作目录中的文件已经是当前分支的版本，所以我们只需要处理“删除”的情况。
+                if (currentBlob == null) {
+                    // 2a: 当前分支删除了文件，将此删除操作暂存。
+                    stagedForRemoval(fileName);
+                }
+                // 2b: 如果只是修改内容，文件已在工作目录，无需操作。
+            } else if (isModifiedInTarget) {
+                // Case 3: 只有目标分支修改了
+                if (targetBlob != null) {
+                    // 3a: 目标分支添加或修改了文件，检出目标版本并暂存。
+                    checkoutFileFromCommit(targetCommit.getSha(), fileName);
+                    stagedForAddition(fileName);
+                } else {
+                    // 3b: 目标分支删除了文件，将此删除操作暂存。
+                    stagedForRemoval(fileName);
+                }
             }
+            // Case 4: 两边都没修改，什么都不用做。
         }
         return hasConflict;
     }
