@@ -1,5 +1,9 @@
 package gitlet;
 
+import java.io.File;
+
+import static gitlet.Utils.join;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author Sihao Wong
  */
@@ -15,6 +19,11 @@ public class Main {
         }
 
         String firstArg = args[0];
+        if (!firstArg.equals("init") && !inGitletDirectory()) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
+
         switch (firstArg) {
             case "init":
                 initHandler(args);
@@ -224,6 +233,12 @@ public class Main {
             System.exit(0);
         }
     }
+
+    private static boolean inGitletDirectory() {
+        File gitletDir = join(".gitlet");
+        return gitletDir.exists() && gitletDir.isDirectory();
+    }
+
 
 
 

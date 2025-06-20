@@ -443,7 +443,8 @@ public class Repository {
 
                 if (isUntracked
                         && newBranchCommit.getBlobs().containsKey(fileName)) {
-                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    message("There is an untracked file in the way; delete it,"
+                            + " or add and commit it first.");
                     System.exit(0);
                 }
 
@@ -567,12 +568,14 @@ public class Repository {
             System.exit(0);
         }
         List<String> allFilesInCWD = plainFilenamesIn(CWD);
-        HashMap<String, String> targetBlobs = Commit.fromFile(branches.get(targetBranch)).getBlobs();
+        HashMap<String, String> targetBlobs = Commit.fromFile(branches.
+                get(targetBranch)).getBlobs();
         if (allFilesInCWD != null) {
             for (String fileName : allFilesInCWD) {
                 if (!getHead().getBlobs().containsKey(fileName)
                         && targetBlobs.containsKey(fileName)) {
-                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    message("There is an untracked file in the way; delete it, "
+                            + "or add and commit it first.");
                     System.exit(0);
                 }
             }
@@ -590,7 +593,7 @@ public class Repository {
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
 
-        hasConflict = processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
+        processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
 
 
         Commit head = getHead();
@@ -604,7 +607,7 @@ public class Repository {
         newCommit.saveCommit();
 
     }
-    private static boolean processMergeFiles(Commit splitPoint, Commit targetCommit,
+    private static void processMergeFiles(Commit splitPoint, Commit targetCommit,
                                              HashMap<String, String> splitPointBlobs,
                                              HashMap<String, String> currentBlobs,
                                              HashMap<String, String> targetBlobs) {
@@ -623,8 +626,8 @@ public class Repository {
             boolean unchangedInSplit = Objects.equals(splitBlob, currentBlob);
             boolean unchangedInOther = Objects.equals(targetBlob, splitBlob);
             // Case 1: 文件自分叉点后只在“给定分支”中修改过： → 用给定分支的版本替换，并自动加入暂存区（staged）。
-            if (splitPointBlobs.containsKey(blobsName) &&
-                    !unchangedInTarget && unchangedInSplit) {
+            if (splitPointBlobs.containsKey(blobsName)
+                    && !unchangedInTarget && unchangedInSplit) {
                 if (targetBlob != null) {
                     checkoutFileFromCommit(targetCommit.getSha(), blobsName);
                     stagedForAddition(blobsName);
@@ -641,8 +644,8 @@ public class Repository {
             } else if (!splitPointBlobs.containsKey(blobsName)
                     && currentBlob != null && targetBlob == null) {
                 continue;
-            } //文件在分叉点不存在，但只在“给定分支”中存在： → 从给定分支检出（checkout）并加入暂存区
-            else if (!splitPointBlobs.containsKey(blobsName)
+                //文件在分叉点不存在，但只在“给定分支”中存在： → 从给定分支检出（checkout）并加入暂存区
+            } else if (!splitPointBlobs.containsKey(blobsName)
                     && targetBlob != null && currentBlob == null) {
                 checkoutFileFromCommit(targetCommit.getSha(), blobsName);
                 stagedForAddition(blobsName);
@@ -653,7 +656,7 @@ public class Repository {
                 stagedForRemoval(blobsName);
                 //文件在分叉点存在，给定分支未改，但在当前分支中被删除：→ 保持删除状态。
             } else if ((splitPointBlobs.containsKey(blobsName)
-            && unchangedInOther && !currentBlobs.containsKey(blobsName))) {
+                && unchangedInOther && !currentBlobs.containsKey(blobsName))) {
                 continue;
             } else {
                 hasConflict = true;
@@ -661,7 +664,6 @@ public class Repository {
                 System.out.println("Encountered a merge conflict.");
             }
         }
-        return hasConflict;
     }
 
 
