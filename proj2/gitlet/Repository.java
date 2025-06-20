@@ -589,24 +589,20 @@ public class Repository {
         }
         HashMap<String, String> splitPointBlobs = splitPoint.getBlobs();
         HashMap<String, String> currentBlobs = getHead().getBlobs();
-        HashSet<String> allFiles = new HashSet<>();
-        allFiles.addAll(splitPointBlobs.keySet());
-        allFiles.addAll(currentBlobs.keySet());
-        allFiles.addAll(targetBlobs.keySet());
+
         hasConflict = processMergeFiles(splitPoint, targetCommit, splitPointBlobs, currentBlobs, targetBlobs);
-        if (!hasConflict) {
-            commitCommands("Merged " + targetBranch + " into " + currentBranch + ".");
-        } else {
-            Commit head = getHead();
-            String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-            Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
-            newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
-            newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
-            Stage.clear();
-            changeHead(newCommit);
-            changeBranchCommitAndSave(newCommit);
-            newCommit.saveCommit();
-        }
+
+
+        Commit head = getHead();
+        String message = "Merged " + targetBranch + " into " + currentBranch + ".";
+        Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
+        newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
+        newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
+        Stage.clear();
+        changeHead(newCommit);
+        changeBranchCommitAndSave(newCommit);
+        newCommit.saveCommit();
+
     }
     private static boolean processMergeFiles(Commit splitPoint, Commit targetCommit,
                                              HashMap<String, String> splitPointBlobs,
@@ -618,41 +614,47 @@ public class Repository {
         allFiles.addAll(currentBlobs.keySet());
         allFiles.addAll(targetBlobs.keySet());
 
+
         for (String blobsName : allFiles) {
             String splitBlob = splitPointBlobs.get(blobsName);
             String currentBlob = currentBlobs.get(blobsName);
             String targetBlob = targetBlobs.get(blobsName);
-
-            // Case 1: current 没变，target 改了 -> 使用 target 内容
-            if (!Objects.equals(targetBlob, currentBlob)
-                    && Objects.equals(currentBlob, splitBlob)) {
-
-                // 如果 current 已删除，但 split 有，而 target 恢复了 -> 冲突！
-                if (currentBlob == null && splitBlob != null && targetBlob != null) {
-                    hasConflict = true;
-                    handleConflict(blobsName, currentBlobs, targetBlobs);
-                    System.out.println("Encountered a merge conflict.");
-                } else if (targetBlob != null) {
+            boolean unchangedInTarget = Objects.equals(targetBlob, currentBlob);
+            boolean unchangedInSplit = Objects.equals(splitBlob, currentBlob);
+            boolean unchangedInOther = Objects.equals(targetBlob, splitBlob);
+            // Case 1: 文件自分叉点后只在“给定分支”中修改过： → 用给定分支的版本替换，并自动加入暂存区（staged）。
+            if (splitPointBlobs.containsKey(blobsName) &&
+                    !unchangedInTarget && unchangedInSplit) {
+                if (targetBlob != null) {
                     checkoutFileFromCommit(targetCommit.getSha(), blobsName);
                     stagedForAddition(blobsName);
                 } else {
                     stagedForRemoval(blobsName);
                 }
-
-                // Case 2: target 没变，current 改了 -> 忽略
-            } else if (!Objects.equals(currentBlob, splitBlob)
-                    && Objects.equals(targetBlob, splitBlob)) {
+                // 文件自分叉点后只在“当前分支”中修改过： → 保持不变。
+            } else if (!unchangedInSplit && unchangedInOther) {
                 continue;
-
-                // Case 3: target 和 current 都未改 -> 忽略
-            } else if (Objects.equals(targetBlob, currentBlob)) {
+                // 文件在两个分支中都以相同方式修改（内容一样或都删除）： → 不变。
+            } else if (unchangedInTarget) {
                 continue;
-
-                // Case 4: split 有，current 和 target 都删了 -> 移除文件
-            } else if (splitBlob != null && currentBlob == null && targetBlob == null) {
+                // 文件在分叉点不存在，但只在“当前分支”中存在： → 保持不变。
+            } else if (!splitPointBlobs.containsKey(blobsName)
+                    && currentBlob != null && targetBlob == null) {
+                continue;
+            } //文件在分叉点不存在，但只在“给定分支”中存在： → 从给定分支检出（checkout）并加入暂存区
+            else if (!splitPointBlobs.containsKey(blobsName)
+                    && targetBlob != null && currentBlob == null) {
+                checkoutFileFromCommit(targetCommit.getSha(), blobsName);
+                stagedForAddition(blobsName);
+                //文件在分叉点存在，当前分支未改，但在给定分支中被删除：→ 删除该文件，并取消跟踪（untrack）。
+            } else if (splitPointBlobs.containsKey(blobsName)
+                    && unchangedInSplit
+                    && !targetBlobs.containsKey(blobsName)) {
                 stagedForRemoval(blobsName);
-
-                // Case 5: 有冲突 -> 生成冲突内容
+                //文件在分叉点存在，给定分支未改，但在当前分支中被删除：→ 保持删除状态。
+            } else if ((splitPointBlobs.containsKey(blobsName)
+            && unchangedInOther && !currentBlobs.containsKey(blobsName))) {
+                continue;
             } else {
                 hasConflict = true;
                 handleConflict(blobsName, currentBlobs, targetBlobs);
@@ -676,6 +678,7 @@ public class Repository {
         }
         String merged = "<<<<<<< HEAD\n" + currentContent
                 + "=======\n" + targetContent + ">>>>>>>\n";
+        writeContents(join(CWD, fileName), merged);
         writeContents(join(CWD, fileName), merged);
         stagedForAddition(fileName);
     }
@@ -705,28 +708,8 @@ public class Repository {
     /**
      * 找到当前分支 HEAD 与 targetBranch 的最近公共祖先（split point）。
      */
-    private static int getAbsoluteDepth(String commitSha, Map<String, Integer> cache) {
-        if (commitSha == null) {
-            return -1;
-        }
-        if (cache.containsKey(commitSha)) {
-            return cache.get(commitSha);
-        }
-
-        Commit commit = Commit.fromFile(commitSha);
-        // 递归调用时，必须把cache传下去
-        int depth1 = getAbsoluteDepth(commit.getParent(), cache);
-        int depth2 = getAbsoluteDepth(commit.get2Parent(), cache);
-
-        int currentDepth = 1 + Math.max(depth1, depth2);
-        cache.put(commitSha, currentDepth);
-        return currentDepth;
-    }
-
-
-    // 在你的getSplitPoint方法里使用它：
     private static Commit getSplitPoint(String targetBranch) {
-        // 1. 找到所有共同祖先
+        // 读取分支映射
         currentBranchFromFile();
         branchesMapFromFile();
 
@@ -735,26 +718,33 @@ public class Repository {
         String targetSha = branches.get(targetBranch);
         Set<String> ancestorsA = getAllAncestors(headSha);
         Set<String> ancestorsB = getAllAncestors(targetSha);
-        Set<String> commonAncestors = new HashSet<>(ancestorsA);
-        commonAncestors.retainAll(ancestorsB);
 
-        // 2. 遍历共同祖先，找到绝对深度最大的那个
-        int maxDepth = -1;
-        String lcaSha = null;
-        Map<String, Integer> depthCache = new HashMap<>();
+        // 找出公共祖先
+        Set<String> common = new HashSet<>(ancestorsA);
+        common.retainAll(ancestorsB);
 
-        for (String sha : commonAncestors) {
-            int depth = getAbsoluteDepth(sha,depthCache);
-            if (depth > maxDepth) {
-                maxDepth = depth;
-                lcaSha = sha;
+        // BFS 从当前 HEAD 开始，找到第一个出现在公共祖先集合中的提交
+        Queue<String> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+        queue.offer(headSha);
+        while (!queue.isEmpty()) {
+            String sha = queue.poll();
+            if (sha == null || visited.contains(sha)) {
+                continue;
+            }
+            if (common.contains(sha)) {
+                return Commit.fromFile(sha);
+            }
+            visited.add(sha);
+            Commit c = Commit.fromFile(sha);
+            if (c.getParent() != null) {
+                queue.offer(c.getParent());
+            }
+            if (c.get2Parent() != null) {
+                queue.offer(c.get2Parent());
             }
         }
-
-        // 清空缓存，为下次调用做准备（或者你可以让它一直存在，作为全局缓存）
-        // depthCache.clear();
-
-        return Commit.fromFile(lcaSha);
+        return null;
     }
 
 
