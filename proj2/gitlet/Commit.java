@@ -115,10 +115,11 @@ public class Commit implements Serializable {
         return timestamp;
     }
 
-    public void addBlobs(HashMap<String, String> stageAddition, HashMap<String, String> stageRemovement) {
+    public void addBlobs(HashMap<String, String> stageAddition,
+                         HashMap<String, String> stageRemoval) {
         blobs.putAll(stageAddition);
-        if (stageRemovement != null) {
-            removeSamekey(blobs, stageRemovement);
+        if (stageRemoval != null) {
+            removeSamekey(blobs, stageRemoval);
         }
     }
 

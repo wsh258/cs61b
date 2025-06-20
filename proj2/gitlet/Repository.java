@@ -598,7 +598,8 @@ public class Repository {
 
         Commit head = getHead();
         String message = "Merged " + targetBranch + " into " + currentBranch + ".";
-        Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(), branches.get(targetBranch));
+        Commit newCommit = new Commit(message, getFormattedTimestamp(), head.getSha(),
+                branches.get(targetBranch));
         newCommit.addBlobs(head.getBlobs(), null);  // 这样 newCommit 改的只是自己的 blobs
         newCommit.addBlobs(Stage.fromFile().getAddition(), Stage.fromFile().getRemoval());
         Stage.clear();
