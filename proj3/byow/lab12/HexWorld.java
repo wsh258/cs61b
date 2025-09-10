@@ -17,27 +17,6 @@ public class HexWorld {
     private static final int HEIGHT = 50;
 
 
-
-//    private static void addHexagon (TETile[][] tiles, int length, int xp, int yp) {
-//    int middleWidth = getHexMiddleWidth(length);
-//        for (int i = 0; i < length * 2; i++){
-//            if (i < length) {
-//                xp--;
-//                yp--;
-//                addRowTile(tiles,length + (i*2), xp, yp);
-//            } else if (i == length){
-//                yp--;
-//                addRowTile(tiles,middleWidth, xp, yp);
-//            }
-//            else {
-//                xp++;
-//                yp--;
-//                addRowTile(tiles,middleWidth - (((i-1) % length) * 2) - 2, xp, yp);
-//            }
-//        }
-//    }
-
-
     private static void addHexagon(TETile[][] tiles, int length, int xp, int yp) {
         int totalRows = 2 * length;
         TETile ran = randomTile();
