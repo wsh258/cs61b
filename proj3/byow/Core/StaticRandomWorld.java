@@ -182,52 +182,7 @@ public class StaticRandomWorld {
     public static void main(String[] args) {
         TERenderer ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
-        TETile[][] tiles = new TETile[WIDTH][HEIGHT];
-        for (int x = 0; x < WIDTH; x += 1) {
-            for (int y = 0; y < HEIGHT; y += 1) {
-                tiles[x][y] = Tileset.NOTHING;
-            }
-        }
-
-        ArrayList<Room> rooms = new ArrayList<>();
-        int roomCount = uniform(new Random(), 16, 26);
-        while (rooms.size() < roomCount) {
-            Room addRoom = new Room(new Random());
-            if (addRoom.isOK(rooms)) {
-                rooms.add(addRoom);
-            }
-        }
-        for (Room room : rooms) {
-            room.drawRoom(tiles);
-        }
-
-        ArrayList<Room> connected = new ArrayList<>();
-        ArrayList<Room> unconnected = new ArrayList<>(rooms);
-        connected.add(unconnected.remove(0)); // 随便拿一个房间作为起点
-        while (!unconnected.isEmpty()) {
-            Room closestRoom = null;
-            Room fromRoom = null;
-            double minDist = Double.MAX_VALUE;
-            // 找到最近的房间对
-            for (Room c : connected) {
-                for (Room u : unconnected) {
-                    double d = Room.distance(c, u);
-                    if (d < minDist) {
-                        minDist = d;
-                        closestRoom = u;
-                        fromRoom = c;
-                    }
-                }
-            }
-            // 连接这两个房间
-            if (fromRoom != null) {
-                drawHallway(tiles, fromRoom, closestRoom);
-            }
-            connected.add(closestRoom);
-            unconnected.remove(closestRoom);
-        }
-
-        drawWall(tiles);
+        TETile[][] tiles = staticRandomWorld(new Random(SEED));
         ter.renderFrame(tiles);
     }
 
