@@ -30,35 +30,39 @@ public class StaticRandomWorld {
 
 
     private static class Room {
-        private final Random RANDOM = new Random();
+        private final Random RANDOM;
 
         private int topXp;
         private int topYp;
         private int downXp;
         private int downYp;
 
-
-        private Room() {
-            int[] xp = twoSortedRandomDistinct(null, 1, WIDTH);
-            int[] yp = twoSortedRandomDistinct(null, 1, HEIGHT);
+        private Room(Random random) {
+            RANDOM = random;
+            int[] xp = twoSortedRandomDistinct(random, 1, WIDTH);
+            int[] yp = twoSortedRandomDistinct(random, 1, HEIGHT);
             this.topXp = xp[1];
             this.topYp = yp[1];
             this.downXp = xp[0];
             this.downYp = yp[0];
         }
-        private void draw(TETile[][] tiles, TETile teTile) {
-            for (int i = downXp; i < topXp;i++) {
-                for (int j = downYp;j < topYp;j++) {
-                    tiles[i][j] = teTile;
+
+        private void drawRoom(TETile[][] tiles) {
+            for (int i = downXp; i < topXp; i++) {
+                for (int j = downYp; j < topYp; j++) {
+                    tiles[i][j] = Tileset.FLOOR;
                 }
             }
         }
-        private int getDownXp(){
+
+        private int getDownXp() {
             return this.topXp;
         }
-        private int getDownYp(){
+
+        private int getDownYp() {
             return this.downYp;
         }
+
         private boolean isOverlap(Room otherRoom) {
             return this.topXp >= otherRoom.downXp && this.downXp <= otherRoom.topXp &&
                     this.topYp >= otherRoom.downYp && this.downYp <= otherRoom.topYp;
@@ -73,35 +77,31 @@ public class StaticRandomWorld {
             return true;
         }
 
+        private int[] getRandomTilePosition() {
+            int[] position = new int[2];
+            position[0] = uniform(RANDOM, downXp + 1, topXp);
+            position[1] = uniform(RANDOM, downYp + 1, topYp);
+            return position;
+        }
+
+        int centerX() {
+            return (topXp + downXp) / 2;
+        }
+
+        int centerY() {
+            return (topYp + downYp) / 2;
+        }
+
+        private static double distance(Room r1, Room r2) {
+            int dx = r1.centerX() - r2.centerX();
+            int dy = r1.centerY() - r2.centerY();
+            return Math.sqrt(dx * dx + dy * dy);
+
+
+        }
     }
 
-    public static void main(String[] args) {
-        TERenderer ter = new TERenderer();
-
-        ter.initialize(WIDTH, HEIGHT);
-
-        TETile[][] tiles = new TETile[WIDTH][HEIGHT];
-        for (int x = 0; x < WIDTH; x += 1) {
-            for (int y = 0; y < HEIGHT; y += 1) {
-                tiles[x][y] = Tileset.NOTHING;
-            }
-        }
-
-        ArrayList<Room> rooms = new ArrayList<>();
-
-        int roomCount = uniform(new Random(), 16, 26);
-
-        while (rooms.size() < roomCount) {
-            Room addRoom = new Room();
-            if (addRoom.isOK(rooms)) {
-                rooms.add(addRoom);
-            }
-        }
-
-        for (Room room : rooms) {
-            room.draw(tiles,Tileset.FLOOR);
-        }
-
+    private static void drawWall(TETile[][] tiles) {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
                 if (tiles[x][y] == Tileset.FLOOR) {
@@ -117,9 +117,119 @@ public class StaticRandomWorld {
                 }
             }
         }
+    }
 
+    private static void drawHallway(TETile[][] tiles, Room fromRoom, Room targetRoom) {
+        int[]xy1 = fromRoom.getRandomTilePosition();
+        int[]xy2 = targetRoom.getRandomTilePosition();
+        for (int x = Math.min(xy1[0], xy2[0]); x <= Math.max(xy1[0], xy2[0]); x++) {
+            tiles[x][xy1[1]] = Tileset.FLOOR;
+        }
+        for (int y = Math.min(xy1[1], xy2[1]); y <= Math.max(xy1[1], xy2[1]); y++) {
+            tiles[xy2[0]][y] = Tileset.FLOOR;
+        }
+    }
 
+    public TETile[][] staticRandomWorld (Random random) {
+        TETile[][] tiles = new TETile[WIDTH][HEIGHT];
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = 0; y < HEIGHT; y += 1) {
+                tiles[x][y] = Tileset.NOTHING;
+            }
+        }
 
+        ArrayList<Room> rooms = new ArrayList<>();
+        int roomCount = uniform(random, 16, 26);
+        while (rooms.size() < roomCount) {
+            Room addRoom = new Room(random);
+            if (addRoom.isOK(rooms)) {
+                rooms.add(addRoom);
+            }
+        }
+        for (Room room : rooms) {
+            room.drawRoom(tiles);
+        }
+
+        ArrayList<Room> connected = new ArrayList<>();
+        ArrayList<Room> unconnected = new ArrayList<>(rooms);
+        connected.add(unconnected.remove(0)); // 随便拿一个房间作为起点
+        while (!unconnected.isEmpty()) {
+            Room closestRoom = null;
+            Room fromRoom = null;
+            double minDist = Double.MAX_VALUE;
+            // 找到最近的房间对
+            for (Room c : connected) {
+                for (Room u : unconnected) {
+                    double d = Room.distance(c, u);
+                    if (d < minDist) {
+                        minDist = d;
+                        closestRoom = u;
+                        fromRoom = c;
+                    }
+                }
+            }
+            // 连接这两个房间
+            if (fromRoom != null) {
+                drawHallway(tiles, fromRoom, closestRoom);
+            }
+            connected.add(closestRoom);
+            unconnected.remove(closestRoom);
+        }
+        drawWall(tiles);
+        return tiles;
+    }
+
+    public static void main(String[] args) {
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
+        TETile[][] tiles = new TETile[WIDTH][HEIGHT];
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = 0; y < HEIGHT; y += 1) {
+                tiles[x][y] = Tileset.NOTHING;
+            }
+        }
+
+        ArrayList<Room> rooms = new ArrayList<>();
+        int roomCount = uniform(new Random(), 16, 26);
+        while (rooms.size() < roomCount) {
+            Room addRoom = new Room(new Random());
+            if (addRoom.isOK(rooms)) {
+                rooms.add(addRoom);
+            }
+        }
+        for (Room room : rooms) {
+            room.drawRoom(tiles);
+        }
+
+        ArrayList<Room> connected = new ArrayList<>();
+        ArrayList<Room> unconnected = new ArrayList<>(rooms);
+        connected.add(unconnected.remove(0)); // 随便拿一个房间作为起点
+        while (!unconnected.isEmpty()) {
+            Room closestRoom = null;
+            Room fromRoom = null;
+            double minDist = Double.MAX_VALUE;
+            // 找到最近的房间对
+            for (Room c : connected) {
+                for (Room u : unconnected) {
+                    double d = Room.distance(c, u);
+                    if (d < minDist) {
+                        minDist = d;
+                        closestRoom = u;
+                        fromRoom = c;
+                    }
+                }
+            }
+            // 连接这两个房间
+            if (fromRoom != null) {
+                drawHallway(tiles, fromRoom, closestRoom);
+            }
+            connected.add(closestRoom);
+            unconnected.remove(closestRoom);
+        }
+
+        drawWall(tiles);
         ter.renderFrame(tiles);
     }
+
 }
+
