@@ -53,7 +53,7 @@ public class KeyboardGameDemo {
     private final double MENU_CENTER_X;
     private final double MENU_TITLE_Y;
     private final double NEW_GAME_Y;
-    private final double LOAD_GAME_Y ;
+    private final double LOAD_GAME_Y;
     private final double QUIT_GAME_Y;
     private final double SEED_PROMPT_Y;
     private final double SEED_INPUT_Y;
@@ -158,7 +158,7 @@ public class KeyboardGameDemo {
                         TERenderer ter = new TERenderer();
                         ter.initialize(width, height);
                         ter.renderFrame(world);
-                        moving(ter, world, player);
+                        moving(ter, player);
                         return;
                     case KEY_LOAD_GAME:
                         System.out.println("Load Game (TODO)");
@@ -179,7 +179,7 @@ public class KeyboardGameDemo {
         return world;
     }
 
-    private void moving(TERenderer ter, TETile[][] world, int[] playerPosition) {
+    private void moving(TERenderer ter, int[] playerPosition) {
         boolean waitingForQ = false;
 
         while (true) {
@@ -188,8 +188,7 @@ public class KeyboardGameDemo {
 
                 if (waitingForQ) {
                     if (c == KEY_SAVE_SUFFIX) {
-                        save(seed, playerPosition);
-                        System.out.println("Save Game (TODO)");
+                        save(playerPosition);
                         System.exit(0);
                     }
                     waitingForQ = false;
@@ -197,16 +196,16 @@ public class KeyboardGameDemo {
 
                 switch (c) {
                     case KEY_UP:
-                        move(0, 1, world, playerPosition, ter);
+                        move(0, 1, playerPosition);
                         break;
                     case KEY_DOWN:
-                        move(0, -1, world, playerPosition, ter);
+                        move(0, -1, playerPosition);
                         break;
                     case KEY_LEFT:
-                        move(-1, 0, world, playerPosition, ter);
+                        move(-1, 0, playerPosition);
                         break;
                     case KEY_RIGHT:
-                        move(1, 0, world, playerPosition, ter);
+                        move(1, 0, playerPosition);
                         break;
                     case KEY_SAVE_PREFIX:
                         waitingForQ = true;
@@ -215,7 +214,7 @@ public class KeyboardGameDemo {
                         break;
                 }
             }
-            drawHUD(world);
+            drawHUD();
             StdDraw.pause(MOVE_DELAY_MS);
             ter.renderFrame(world);
         }
@@ -224,28 +223,17 @@ public class KeyboardGameDemo {
     /**
      * 移动方法：尝试移动玩家，如果成功就更新位置并重绘。
      */
-    private void move(int dx, int dy, TETile[][] world, int[] playerPosition, TERenderer ter) {
+    private void move(int dx, int dy, int[] playerPosition) {
         int newX = playerPosition[0] + dx;
         int newY = playerPosition[1] + dy;
 
-        if (swap(world, playerPosition[0], playerPosition[1], newX, newY)) {
+        if (swap(playerPosition[0], playerPosition[1], newX, newY)) {
             playerPosition[0] = newX;
             playerPosition[1] = newY;
         }
     }
 
-    private int[] playerPosition(TETile[][] world) {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                if (world[x][y] == Tileset.AVATAR) {
-                    return new int[]{x, y};
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean swap(TETile[][] world, int playerX, int playerY, int targetX, int targetY) {
+    private boolean swap(int playerX, int playerY, int targetX, int targetY) {
         if (world[playerX][playerY].equals(Tileset.AVATAR) && world[targetX][targetY].equals(Tileset.FLOOR)) {
             world[playerX][playerY] = Tileset.FLOOR;
             world[targetX][targetY] = Tileset.AVATAR;
@@ -274,7 +262,7 @@ public class KeyboardGameDemo {
         return sb.toString();
     }
 
-    private void drawHUD(TETile[][] world) {
+    private void drawHUD() {
         StdDraw.setPenColor(Color.WHITE);
         StdDraw.setFont(new Font(FONT_NAME, Font.BOLD, HUD_FONT_SIZE));
         int mx = (int) StdDraw.mouseX();
@@ -288,7 +276,7 @@ public class KeyboardGameDemo {
         StdDraw.show();
     }
 
-    private void save(long seed, int[] playerPosition) {
+    private void save(int[] playerPosition) {
         Path file = Paths.get(SAVE_FILE);
         String gameSave;
         gameSave = seed + " ";
@@ -305,7 +293,6 @@ public class KeyboardGameDemo {
         Path file = Paths.get(SAVE_FILE);
         String loadString = "";
 
-
         try {
             loadString = Files.readString(file); // 一次性读取整个文件内容
             System.out.println(loadString);
@@ -317,7 +304,7 @@ public class KeyboardGameDemo {
         seed = Long.parseLong(loadChar[0]);
         int x = Integer.parseInt(loadChar[1]);
         int y = Integer.parseInt(loadChar[2]);
-        int[] playerPosition = new int[]{x,y};
+        int[] playerPosition = new int[]{x, y};
 
         Random random = new Random(seed);
 
@@ -327,7 +314,30 @@ public class KeyboardGameDemo {
         TERenderer ter = new TERenderer();
         ter.initialize(width, height);
         ter.renderFrame(world);
-        moving(ter, world, playerPosition);
+        moving(ter, playerPosition);
+    }
+
+    private TETile[][] loadWorldLogic() {
+        Path file = Paths.get(SAVE_FILE);
+        String loadString = "";
+
+        try {
+            loadString = Files.readString(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String[] loadChar = loadString.split(" ");
+        seed = Long.parseLong(loadChar[0]);
+        int x = Integer.parseInt(loadChar[1]);
+        int y = Integer.parseInt(loadChar[2]);
+        int[] playerPosition = new int[]{x, y};
+
+        Random random = new Random(seed);
+        StaticRandomWorld worldGen = new StaticRandomWorld(width, height);
+        world = worldGen.staticRandomWorld(random);
+        StaticRandomWorld.generatePlayer(world, playerPosition);
+        return world;
     }
 
     public TETile[][] interactWithInputString(String input) {
@@ -366,16 +376,16 @@ public class KeyboardGameDemo {
                         char move = input.charAt(index++);
                         if (waitingForQ) {
                             if (move == KEY_SAVE_SUFFIX) {
-                                save(seed, player);
+                                save(player);
                                 return world; // 保存后退出
                             }
                             waitingForQ = false;
                         }
                         switch (move) {
-                            case KEY_UP:    move(0, 1, world, player, null); break;
-                            case KEY_DOWN:  move(0, -1, world, player, null); break;
-                            case KEY_LEFT:  move(-1, 0, world, player, null); break;
-                            case KEY_RIGHT: move(1, 0, world, player, null); break;
+                            case KEY_UP:    move(0, 1, player); break;
+                            case KEY_DOWN:  move(0, -1, player); break;
+                            case KEY_LEFT:  move(-1, 0, player); break;
+                            case KEY_RIGHT: move(1, 0, player); break;
                             case KEY_SAVE_PREFIX: waitingForQ = true; break;
                             default: break;
                         }
@@ -383,7 +393,7 @@ public class KeyboardGameDemo {
                     return world;
 
                 case KEY_LOAD_GAME:
-                    loadWorld();
+                    loadWorldLogic();
                     return world;
 
                 case KEY_QUIT:

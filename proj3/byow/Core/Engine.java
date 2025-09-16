@@ -2,9 +2,6 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
-import byow.Core.StaticRandomWorld;
-
-import java.util.Random;
 
 public class Engine {
     TERenderer ter = new TERenderer();
@@ -17,7 +14,7 @@ public class Engine {
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
-        KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH,HEIGHT);
+        KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH, HEIGHT);
         keyboardGameDemo.gaming();
     }
 
@@ -49,7 +46,7 @@ public class Engine {
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
-        KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH,HEIGHT);
+        KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH, HEIGHT);
 
         return keyboardGameDemo.interactWithInputString(input);
     }
