@@ -9,10 +9,17 @@ import java.util.Random;
 import static byow.Core.RandomUtils.uniform;
 
 public class StaticRandomWorld {
-    private static final int WIDTH = 105;
-    private static final int HEIGHT = 45;
+    private final int width ;
+    private final int height;
 
     private static final long SEED = 2873123;
+    TETile[][] tiles;
+
+    StaticRandomWorld(int width, int height) {
+        this.width = width;
+        this.height = height;
+        tiles = new TETile[width][height];
+    }
 
 
     public static int[] twoSortedRandomDistinct(Random random, int a, int b) {
@@ -29,7 +36,7 @@ public class StaticRandomWorld {
     }
 
 
-    private static class Room {
+    private class Room {
         private final Random RANDOM;
 
         private int topXp;
@@ -39,8 +46,8 @@ public class StaticRandomWorld {
 
         private Room(Random random) {
             RANDOM = random;
-            int[] xp = twoSortedRandomDistinct(random, 1, WIDTH);
-            int[] yp = twoSortedRandomDistinct(random, 1, HEIGHT);
+            int[] xp = twoSortedRandomDistinct(random, 1, width);
+            int[] yp = twoSortedRandomDistinct(random, 1, height);
             this.topXp = xp[1];
             this.topYp = yp[1];
             this.downXp = xp[0];
@@ -92,24 +99,24 @@ public class StaticRandomWorld {
             return (topYp + downYp) / 2;
         }
 
-        private static double distance(Room r1, Room r2) {
-            int dx = r1.centerX() - r2.centerX();
-            int dy = r1.centerY() - r2.centerY();
-            return Math.sqrt(dx * dx + dy * dy);
-
-
-        }
     }
 
-    private static void drawWall(TETile[][] tiles) {
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
+    private static double distance(Room r1, Room r2) {
+        int dx = r1.centerX() - r2.centerX();
+        int dy = r1.centerY() - r2.centerY();
+        return Math.sqrt(dx * dx + dy * dy);
+
+    }
+
+    private void drawWall(TETile[][] tiles) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 if (tiles[x][y] == Tileset.FLOOR) {
                     for (int dx = -1; dx <= 1; dx++) {
                         for (int dy = -1; dy <= 1; dy++) {
                             int nx = x + dx;
                             int ny = y + dy;
-                            if (nx >= 0 && nx < WIDTH && ny >= 0 && ny < HEIGHT && tiles[nx][ny] == Tileset.NOTHING) {
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height && tiles[nx][ny] == Tileset.NOTHING) {
                                 tiles[nx][ny] = Tileset.WALL;
                             }
                         }
@@ -130,14 +137,13 @@ public class StaticRandomWorld {
         }
     }
 
-    public static TETile[][] staticRandomWorld (Random random) {
-        TETile[][] tiles = new TETile[WIDTH][HEIGHT];
-        for (int x = 0; x < WIDTH; x += 1) {
-            for (int y = 0; y < HEIGHT; y += 1) {
+    public TETile[][] staticRandomWorld (Random random) {
+        TETile[][] tiles = new TETile[width][height];
+        for (int x = 0; x < width; x += 1) {
+            for (int y = 0; y < height; y += 1) {
                 tiles[x][y] = Tileset.NOTHING;
             }
         }
-
         ArrayList<Room> rooms = new ArrayList<>();
         int roomCount = uniform(random, 16, 26);
         while (rooms.size() < roomCount) {
@@ -149,7 +155,6 @@ public class StaticRandomWorld {
         for (Room room : rooms) {
             room.drawRoom(tiles);
         }
-
         ArrayList<Room> connected = new ArrayList<>();
         ArrayList<Room> unconnected = new ArrayList<>(rooms);
         connected.add(unconnected.remove(0)); // 随便拿一个房间作为起点
@@ -160,7 +165,7 @@ public class StaticRandomWorld {
             // 找到最近的房间对
             for (Room c : connected) {
                 for (Room u : unconnected) {
-                    double d = Room.distance(c, u);
+                    double d = distance(c, u);
                     if (d < minDist) {
                         minDist = d;
                         closestRoom = u;
@@ -179,12 +184,33 @@ public class StaticRandomWorld {
         return tiles;
     }
 
-    public static void main(String[] args) {
-        TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
-        TETile[][] tiles = staticRandomWorld(new Random(SEED));
-        ter.renderFrame(tiles);
+    public int[] generatePlayer(TETile[][] originWorld,Random rand) {
+        while (true) {
+            int x = rand.nextInt(width);
+            int y = rand.nextInt(height);
+
+            if (originWorld[x][y] == Tileset.FLOOR) {
+                originWorld[x][y] = Tileset.AVATAR; // 找到合法出生点
+                return new int[]{x,y};
+            }
+        }
     }
 
+    public static void generatePlayer(TETile[][] originWorld,int[] playerPosition) {
+        originWorld[playerPosition[0]][playerPosition[1]] = Tileset.AVATAR;
+    }
+
+    public static void main(String[] args) {
+        TERenderer ter = new TERenderer();
+        int width = 105;
+        int height = 80;
+        ter.initialize(105, 80);
+        Random random = new Random(SEED);
+        StaticRandomWorld worldGen = new StaticRandomWorld(width, height);
+        // 生成地图
+        TETile[][] tiles = worldGen.staticRandomWorld(random);
+        worldGen.generatePlayer(tiles, random);
+        ter.renderFrame(tiles);
+    }
 }
 

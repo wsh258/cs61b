@@ -17,6 +17,8 @@ public class Engine {
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
+        KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH,HEIGHT);
+        keyboardGameDemo.gaming();
     }
 
     /**
@@ -47,13 +49,8 @@ public class Engine {
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
-        input = input.toUpperCase(); // 转大写，保证兼容 "n123s"
-        char[] in = input.toCharArray();
-        if(in[0] == 'N' && in[input.length()-1] == 'S') {
-            String number = input.substring(1, input.length() - 1);
-            TETile[][] finalWorldFrame = StaticRandomWorld.staticRandomWorld(new Random(Long.parseLong(number)));
-            return finalWorldFrame;
-        }
-        return null;
+        KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH,HEIGHT);
+
+        return keyboardGameDemo.interactWithInputString(input);
     }
 }
