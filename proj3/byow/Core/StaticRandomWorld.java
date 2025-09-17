@@ -151,7 +151,7 @@ public class StaticRandomWorld {
         }
         ArrayList<Room> connected = new ArrayList<>();
         ArrayList<Room> unconnected = new ArrayList<>(rooms);
-        connected.add(unconnected.removeFirst()); // 随便拿一个房间作为起点
+        connected.add(unconnected.remove(0)); // 随便拿一个房间作为起点
         while (!unconnected.isEmpty()) {
             Room closestRoom = null;
             Room fromRoom = null;
