@@ -9,7 +9,7 @@ import java.util.Random;
 import static byow.Core.RandomUtils.uniform;
 
 public class StaticRandomWorld {
-    private final int width ;
+    private final int width;
     private final int height;
 
     private static final long SEED = 2873123;
@@ -54,7 +54,7 @@ public class StaticRandomWorld {
             this.downYp = yp[0];
         }
 
-        private void drawRoom(TETile[][] tiles) {
+        private void drawRoom() {
             for (int i = downXp; i < topXp; i++) {
                 for (int j = downYp; j < topYp; j++) {
                     tiles[i][j] = Tileset.FLOOR;
@@ -71,8 +71,8 @@ public class StaticRandomWorld {
         }
 
         private boolean isOverlap(Room otherRoom) {
-            return this.topXp >= otherRoom.downXp && this.downXp <= otherRoom.topXp &&
-                    this.topYp >= otherRoom.downYp && this.downYp <= otherRoom.topYp;
+            return this.topXp >= otherRoom.downXp && this.downXp <= otherRoom.topXp
+                    && this.topYp >= otherRoom.downYp && this.downYp <= otherRoom.topYp;
         }
 
         private boolean isOK(ArrayList<Room> otherRooms) {
@@ -108,7 +108,7 @@ public class StaticRandomWorld {
 
     }
 
-    private void drawWall(TETile[][] tiles) {
+    private void drawWall() {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 if (tiles[x][y] == Tileset.FLOOR) {
@@ -137,8 +137,7 @@ public class StaticRandomWorld {
         }
     }
 
-    public TETile[][] staticRandomWorld (Random random) {
-        TETile[][] tiles = new TETile[width][height];
+    public TETile[][] staticRandomWorld(Random random) {
         for (int x = 0; x < width; x += 1) {
             for (int y = 0; y < height; y += 1) {
                 tiles[x][y] = Tileset.NOTHING;
@@ -153,7 +152,7 @@ public class StaticRandomWorld {
             }
         }
         for (Room room : rooms) {
-            room.drawRoom(tiles);
+            room.drawRoom();
         }
         ArrayList<Room> connected = new ArrayList<>();
         ArrayList<Room> unconnected = new ArrayList<>(rooms);
@@ -180,23 +179,23 @@ public class StaticRandomWorld {
             connected.add(closestRoom);
             unconnected.remove(closestRoom);
         }
-        drawWall(tiles);
+        drawWall();
         return tiles;
     }
 
-    public int[] generatePlayer(TETile[][] originWorld,Random rand) {
+    public int[] generatePlayer(TETile[][] originWorld, Random rand) {
         while (true) {
             int x = rand.nextInt(width);
             int y = rand.nextInt(height);
 
             if (originWorld[x][y] == Tileset.FLOOR) {
                 originWorld[x][y] = Tileset.AVATAR; // 找到合法出生点
-                return new int[]{x,y};
+                return new int[]{x, y};
             }
         }
     }
 
-    public static void generatePlayer(TETile[][] originWorld,int[] playerPosition) {
+    public static void generatePlayer(TETile[][] originWorld, int[] playerPosition) {
         originWorld[playerPosition[0]][playerPosition[1]] = Tileset.AVATAR;
     }
 

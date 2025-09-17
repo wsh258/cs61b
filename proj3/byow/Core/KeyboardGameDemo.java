@@ -234,7 +234,8 @@ public class KeyboardGameDemo {
     }
 
     private boolean swap(int playerX, int playerY, int targetX, int targetY) {
-        if (world[playerX][playerY].equals(Tileset.AVATAR) && world[targetX][targetY].equals(Tileset.FLOOR)) {
+        if (world[playerX][playerY].equals(Tileset.AVATAR)
+                && world[targetX][targetY].equals(Tileset.FLOOR)) {
             world[playerX][playerY] = Tileset.FLOOR;
             world[targetX][targetY] = Tileset.AVATAR;
             return true;
@@ -283,7 +284,8 @@ public class KeyboardGameDemo {
         gameSave = gameSave + playerPosition[0] + " " + playerPosition[1];
         System.out.println(gameSave);
         try {
-            Files.writeString(file, gameSave, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(file, gameSave,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -340,13 +342,13 @@ public class KeyboardGameDemo {
         return playerPosition;
     }
 
-    public TETile[][] interactWithInputString(String input) {
+    public TETile[][] interactWithString(String input) {
         input = input.toUpperCase();
         int index = 0;
-
+        int[] player;
+        boolean waitingForQ = false;
         while (index < input.length()) {
             char c = input.charAt(index);
-
             switch (c) {
                 case KEY_NEW_GAME:
                     // 读种子
@@ -368,10 +370,8 @@ public class KeyboardGameDemo {
                     Random random = new Random(seed);
                     StaticRandomWorld worldGen = new StaticRandomWorld(width, height);
                     world = worldGen.staticRandomWorld(random);
-                    int[] player = worldGen.generatePlayer(world, random);
-
+                    player = worldGen.generatePlayer(world, random);
                     // 执行后续命令 (WASD :Q)
-                    boolean waitingForQ = false;
                     while (index < input.length()) {
                         char move = input.charAt(index++);
                         if (waitingForQ) {
@@ -391,10 +391,8 @@ public class KeyboardGameDemo {
                         }
                     }
                     return world;
-
                 case KEY_LOAD_GAME:
                     player = loadWorldLogic();
-                    waitingForQ = false;
                     while (index < input.length()) {
                         char move = input.charAt(index++);
                         if (waitingForQ) {
@@ -414,10 +412,8 @@ public class KeyboardGameDemo {
                         }
                     }
                     return world;
-
                 case KEY_QUIT:
                     return world;
-
                 default:
                     index++;
                     break;
@@ -425,6 +421,4 @@ public class KeyboardGameDemo {
         }
         return world;
     }
-
-
 }

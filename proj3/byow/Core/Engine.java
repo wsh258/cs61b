@@ -48,6 +48,6 @@ public class Engine {
         // that works for many different input types.
         KeyboardGameDemo keyboardGameDemo = new KeyboardGameDemo(WIDTH, HEIGHT);
 
-        return keyboardGameDemo.interactWithInputString(input);
+        return keyboardGameDemo.interactWithString(input);
     }
 }
