@@ -317,7 +317,7 @@ public class KeyboardGameDemo {
         moving(ter, playerPosition);
     }
 
-    private TETile[][] loadWorldLogic() {
+    private int[] loadWorldLogic() {
         Path file = Paths.get(SAVE_FILE);
         String loadString = "";
 
@@ -337,7 +337,7 @@ public class KeyboardGameDemo {
         StaticRandomWorld worldGen = new StaticRandomWorld(width, height);
         world = worldGen.staticRandomWorld(random);
         StaticRandomWorld.generatePlayer(world, playerPosition);
-        return world;
+        return playerPosition;
     }
 
     public TETile[][] interactWithInputString(String input) {
@@ -393,7 +393,26 @@ public class KeyboardGameDemo {
                     return world;
 
                 case KEY_LOAD_GAME:
-                    loadWorldLogic();
+                    player = loadWorldLogic();
+                    waitingForQ = false;
+                    while (index < input.length()) {
+                        char move = input.charAt(index++);
+                        if (waitingForQ) {
+                            if (move == KEY_SAVE_SUFFIX) {
+                                save(player);
+                                return world; // 保存后退出
+                            }
+                            waitingForQ = false;
+                        }
+                        switch (move) {
+                            case KEY_UP:    move(0, 1, player); break;
+                            case KEY_DOWN:  move(0, -1, player); break;
+                            case KEY_LEFT:  move(-1, 0, player); break;
+                            case KEY_RIGHT: move(1, 0, player); break;
+                            case KEY_SAVE_PREFIX: waitingForQ = true; break;
+                            default: break;
+                        }
+                    }
                     return world;
 
                 case KEY_QUIT:
