@@ -39,10 +39,10 @@ public class StaticRandomWorld {
     private class Room {
         private final Random RANDOM;
 
-        private int topXp;
-        private int topYp;
-        private int downXp;
-        private int downYp;
+        private final int topXp;
+        private final int topYp;
+        private final int downXp;
+        private final int downYp;
 
         private Room(Random random) {
             RANDOM = random;
@@ -62,13 +62,7 @@ public class StaticRandomWorld {
             }
         }
 
-        private int getDownXp() {
-            return this.topXp;
-        }
 
-        private int getDownYp() {
-            return this.downYp;
-        }
 
         private boolean isOverlap(Room otherRoom) {
             return this.topXp >= otherRoom.downXp && this.downXp <= otherRoom.topXp
@@ -116,7 +110,8 @@ public class StaticRandomWorld {
                         for (int dy = -1; dy <= 1; dy++) {
                             int nx = x + dx;
                             int ny = y + dy;
-                            if (nx >= 0 && nx < width && ny >= 0 && ny < height && tiles[nx][ny] == Tileset.NOTHING) {
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height
+                                    && tiles[nx][ny] == Tileset.NOTHING) {
                                 tiles[nx][ny] = Tileset.WALL;
                             }
                         }
@@ -156,7 +151,7 @@ public class StaticRandomWorld {
         }
         ArrayList<Room> connected = new ArrayList<>();
         ArrayList<Room> unconnected = new ArrayList<>(rooms);
-        connected.add(unconnected.remove(0)); // 随便拿一个房间作为起点
+        connected.add(unconnected.removeFirst()); // 随便拿一个房间作为起点
         while (!unconnected.isEmpty()) {
             Room closestRoom = null;
             Room fromRoom = null;
